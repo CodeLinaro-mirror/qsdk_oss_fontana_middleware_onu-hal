@@ -19,16 +19,31 @@
 extern char retValue[256];
 extern char snbuf[256];
 
-static int execute(char *command, char *result);
+int execute(char *command, char *result);
 uint64_t execute_int(const char* cmd);
-char* platform_hal_Get_pm_modulefirmwareversion();
-char* platform_hal_Get_PM_status();
-char* platform_hal_Get_PM_ponmode();
-char* platform_hal_get_pm_operationalstate();
-char* platform_hal_get_ploam_vendorid();
-char* platform_hal_get_ploam_serialnumber();
+char* gpon_get_pm_modulefirmwareversion();
+char* gpon_get_PM_status();
+char* gpon_get_PM_ponmode();
+char* gpon_get_pm_operationalstate();
+char* gpon_get_ploam_vendorid();
+char* gpon_get_ploam_serialnumber();
 uint64_t gpon_get_onu_ani_stats(const char* keyword);
+uint64_t gpon_get_ani_stats_packets_sent();
+uint64_t gpon_get_ani_stats_packets_received();
+uint64_t gpon_get_ani_stats_discard_packets_sent();
+uint64_t gpon_get_ani_stats_discard_packets_received();
 uint64_t gpon_get_onu_ani_tc_pm(const char* keyword);
-
+uint64_t gpon_get_ploam_micerrors();
+uint64_t gpon_get_downstream_message_count();
+uint64_t gpon_get_ranging_time();
+uint64_t gpon_get_upstream_message_count();
+uint64_t gpon_get_omci_baselinemessagecount();
+uint64_t gpon_get_omci_extendedmessagecount();
+uint64_t gpon_get_omci_micerrors();
+uint64_t gpon_get_ploam_onuid();
+uint64_t gpon_get_gem_directions();
+int gpon_get_PM_alam_los();
+int gpon_get_PM_alam_lof();
+uint64_t gpon_get_PM_alam_lcdg();
 
 #endif

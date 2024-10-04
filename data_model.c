@@ -56,11 +56,15 @@ typedef enum _obj_id {
     id_eth_uni_stats,
     id_ani_1,
     id_ani_stats,
-    id_anu_tc_pm_phy,
     id_onu_activation,
+    id_anu_tc_pm_phy,
+    id_tc_pm_gem,
+    id_tc_pm_ploam,
+    id_tc_pm_omci,
+    id_gem_port_1,
+    id_gem_port_pm,
     id_perf_thresholds,
     id_alarms,
-    id_gem_port_1,
     id_transceiver_1,
     id_transceiver_2,
     n_objects
@@ -270,7 +274,7 @@ static void data_model_for_get_method(const char* name) {
     {
         SAH_TRACE_INFO("path='%s' => XPON_ONU", path);
         blobmsg_add_u8(&b, "enable", s_onu_enabled ? 1 : 0);
-        blobmsg_add_string(&b, "version", platform_hal_Get_pm_modulefirmwareversion());
+        blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
         blobmsg_add_string(&b, "equipment_id", "eqid");
         if(str_equal(name, XPON_ONU_ONE, name_len)) 
         {
@@ -291,7 +295,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u8(&b, "is_committed", 1);
         blobmsg_add_u8(&b, "is_active", 1);
         blobmsg_add_u8(&b, "is_valid", 1);
-        blobmsg_add_string(&b, "version", platform_hal_Get_pm_modulefirmwareversion());
+        blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
     } 
     
     else if(str_equal(path, SW_IMG_2, name_len)) 
@@ -301,7 +305,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u8(&b, "is_committed", 0);
         blobmsg_add_u8(&b, "is_active", 0);
         blobmsg_add_u8(&b, "is_valid", 1);
-        blobmsg_add_string(&b, "version", platform_hal_Get_pm_modulefirmwareversion());
+        blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
     } 
     
     else if(str_equal(path, ETH_UNI_1, name_len)) 
@@ -340,8 +344,8 @@ static void data_model_for_get_method(const char* name) {
         SAH_TRACE_INFO("path='%s' => ANI_1", path);
         blobmsg_add_u8(&b, "enable", s_ani_one_enabled ? 1 : 0);
         blobmsg_add_string(&b, "name", "MyANI");
-        blobmsg_add_string(&b, "status", platform_hal_Get_PM_status() );
-        blobmsg_add_string(&b, "pon_mode", platform_hal_Get_PM_ponmode());
+        blobmsg_add_string(&b, "status", gpon_get_PM_status() );
+        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
     } 
     
     else if(str_equal(path, ANI_STATS, name_len))
@@ -349,8 +353,8 @@ static void data_model_for_get_method(const char* name) {
         SAH_TRACE_INFO("path='%s' => ANI_STATS", path);
         blobmsg_add_u64(&b, "bytes_sent", gpon_get_onu_ani_stats("us_byte_out"));
         blobmsg_add_u64(&b, "bytes_received", gpon_get_onu_ani_stats("ds_byte_in"));
-        blobmsg_add_u64(&b, "packets_sent", 0);
-        blobmsg_add_u64(&b, "packets_received", 0);
+        blobmsg_add_u64(&b, "packets_sent", gpon_get_ani_stats_packets_sent());
+        blobmsg_add_u64(&b, "packets_received", gpon_get_ani_stats_packets_received());
         blobmsg_add_u64(&b, "errors_sent", 0);
         blobmsg_add_u64(&b, "errors_received", 0);
         blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_onu_ani_stats("us_ucast"));
@@ -369,9 +373,9 @@ static void data_model_for_get_method(const char* name) {
         SAH_TRACE_INFO("path='%s' => ONU_ACTIVATION", path);
         char onu_state[3];
         snprintf(onu_state, 3, "O%u", s_onu_state);
-        blobmsg_add_string(&b, "onu_state", platform_hal_get_pm_operationalstate());
-        blobmsg_add_string(&b, "vendor_id", platform_hal_get_ploam_vendorid());
-        blobmsg_add_string(&b, "serial_number", platform_hal_get_ploam_serialnumber());
+        blobmsg_add_string(&b, "onu_state", gpon_get_pm_operationalstate());
+        blobmsg_add_string(&b, "vendor_id", gpon_get_ploam_vendorid());
+        blobmsg_add_string(&b, "serial_number", gpon_get_ploam_serialnumber());
         blobmsg_add_u32(&b, "onu_id", 1);
     }
 
@@ -395,10 +399,10 @@ static void data_model_for_get_method(const char* name) {
     }
     
     else if(str_equal(path, TC_PM_PLOAM, name_len)){
-        blobmsg_add_u64(&b, "mic_errors", 0); 
-        blobmsg_add_u64(&b, "downstream_message_count", 0);
-        blobmsg_add_u64(&b, "ranging_time", 0);
-        blobmsg_add_u64(&b, "upstream_message_count", 0);
+        blobmsg_add_u64(&b, "mic_errors", gpon_get_ploam_micerrors()); 
+        blobmsg_add_u64(&b, "downstream_message_count", gpon_get_downstream_message_count());
+        blobmsg_add_u64(&b, "ranging_time", gpon_get_ranging_time());
+        blobmsg_add_u64(&b, "upstream_message_count", gpon_get_upstream_message_count());
     }
     
     else if(str_equal(path, TC_PM_OMCI, name_len)){
@@ -409,8 +413,8 @@ static void data_model_for_get_method(const char* name) {
     
     else if(str_equal(path, GEM_PORT_1, name_len)) {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_1", path);
-        blobmsg_add_u32(&b, "port_id", 1);
-        blobmsg_add_string(&b, "direction", "platform_hal_get_gem_directions(1)" );
+        blobmsg_add_u32(&b, "port_id", gpon_get_ploam_onuid());
+        blobmsg_add_string(&b, "direction", "unidirectional" );
         blobmsg_add_string(&b, "port_type", "multicast");
     } 
     
@@ -430,11 +434,11 @@ static void data_model_for_get_method(const char* name) {
     else if(str_equal(path, ALARMS, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => ALARMS", path);
-        blobmsg_add_u8(&b, "los", 1);
-        blobmsg_add_u8(&b, "lof", 1);
+        blobmsg_add_u8(&b, "los", gpon_get_PM_alam_los());
+        blobmsg_add_u8(&b, "lof", gpon_get_PM_alam_lof());
         blobmsg_add_u8(&b, "sf", 1);
         blobmsg_add_u8(&b, "sd", 1);
-        blobmsg_add_u8(&b, "lcdg", 1);
+        blobmsg_add_u8(&b, "lcdg", gpon_get_PM_alam_lcdg());
         blobmsg_add_u8(&b, "tf", 1);
         blobmsg_add_u8(&b, "suf", 1);
         blobmsg_add_u8(&b, "mem", 1);
@@ -458,8 +462,16 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u32(&b, "identifier", 2);
         blobmsg_add_string(&b, "vendor_name", "Qualcomm");
         blobmsg_add_string(&b, "vendor_part_number", "QCF8000");
-        blobmsg_add_string(&b, "vendor_revision", platform_hal_Get_pm_modulefirmwareversion());
-        blobmsg_add_string(&b, "pon_mode", "platform_hal_Get_PM_ponmode()");
+        blobmsg_add_string(&b, "vendor_revision", gpon_get_pm_modulefirmwareversion());
+        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
+        blobmsg_add_string(&b, "connector", "SC"); // always SC
+        blobmsg_add_u64(&b, "nominal_bit_rate_downstream", 0);
+        blobmsg_add_u64(&b, "nominal_bit_rate_upstream", 0);
+        blobmsg_add_u64(&b, "rx_power", 0);
+        blobmsg_add_u64(&b, "tx_power", 0);
+        blobmsg_add_u64(&b, "voltage", 0);
+        blobmsg_add_u64(&b, "bias", 0);
+        blobmsg_add_u64(&b, "temperature", 0);
     } 
     
     else if(str_equal(path, TRANSCEIVER_2, name_len)) 
@@ -468,7 +480,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u32(&b, "id", 1);
         blobmsg_add_u32(&b, "identifier", 25);
         blobmsg_add_string(&b, "vendor_name", "Qualcomm");
-        blobmsg_add_string(&b, "pon_mode", "platform_hal_Get_PM_ponmode()");
+        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
     } 
     
     else 
@@ -609,7 +621,7 @@ static int common_method_handler(struct ubus_context* ctx, struct ubus_object* o
         }
     }
 
-    uloop_timeout_set(&mreq->timeout, 100);
+    uloop_timeout_set(&mreq->timeout, 1000);
 
     rc = 0;
 

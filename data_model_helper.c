@@ -10,13 +10,13 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<stdint.h>
-#include "helper.h"
+#include "data_model_helper.h"
 #include <inttypes.h>
 
 uint64_t res;
 char retValue[256] = {'\0'};
 
-static int execute(char *command, char *result)
+int execute(char *command, char *result)
 {
     FILE *fp = NULL;
     char output[256] = {'\0'};
@@ -71,7 +71,7 @@ uint64_t execute_int(const char* cmd)
 // xpon_onu.{i} - version
 // xpon_onu.{i}.software_image.{i} - version
 // xpon_onu.{i}.ani.{i}.transceiver.{i} - module_version
-char* platform_hal_Get_pm_modulefirmwareversion()
+char* gpon_get_pm_modulefirmwareversion()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR, itemp;
@@ -90,7 +90,7 @@ char* platform_hal_Get_pm_modulefirmwareversion()
 }
 
 // xpon_onu.{i}.ani.{i} - status
-char* platform_hal_Get_PM_status()
+char* gpon_get_PM_status()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR;
@@ -115,7 +115,7 @@ char* platform_hal_Get_PM_status()
 
 // xpon_onu.{i}.ani.{i} - pon_mode
 // xpon_onu.{i}.ani.{i}.transceiver.{i} - pon_mode
-char* platform_hal_Get_PM_ponmode()
+char* gpon_get_PM_ponmode()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR, itemp;
@@ -134,7 +134,7 @@ char* platform_hal_Get_PM_ponmode()
 }
 
 // xpon_onu.{i}.ani.{i}.tc.onu_activation - onu_state
-char*  platform_hal_get_pm_operationalstate()
+char*  gpon_get_pm_operationalstate()
 {
     char sv[256] = {'\0'};
     int res = RETURN_ERR;
@@ -159,7 +159,7 @@ char*  platform_hal_get_pm_operationalstate()
 }
 
 // xpon_onu.{i}.ani.{i}.tc.onu_activation - vendor_id
-char* platform_hal_get_ploam_vendorid()
+char* gpon_get_ploam_vendorid()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR, itemp;
@@ -179,7 +179,7 @@ char* platform_hal_get_ploam_vendorid()
 }
 
 // xpon_onu.{i}.ani.{i}.tc.onu_activation - serial_number
-char* platform_hal_get_ploam_serialnumber()
+char* gpon_get_ploam_serialnumber()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR, itemp;
@@ -365,7 +365,7 @@ uint64_t gpon_get_gem_directions()
 // ****************************************
 // xpon_onu.{i}.ani.{i}.tc.alarms
 
-int gpon_Get_PM_alam_los()
+int gpon_get_PM_alam_los()
 {
     uint64_t result;
     result=execute_int("grep -w rx_los /proc/trex/io/pon | awk '{print $2}'");
@@ -376,7 +376,7 @@ int gpon_Get_PM_alam_los()
     return 0;
 }
 
-int gpon_Get_PM_alam_lof()
+int gpon_get_PM_alam_lof()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR, itemp;
@@ -385,14 +385,14 @@ int gpon_Get_PM_alam_lof()
     {
         printf("\nError %s\n", __func__);
     }
-    if (ret == "O1")
+    if (sv == "O1")
     {
         return 1;
     }
     return 0;
 }
 
-uint64_t gpon_Get_PM_alam_lcdg()
+uint64_t gpon_get_PM_alam_lcdg()
 {
     uint64_t result;
     result=execute_int("cat /proc/trex/pmhd/gpon | grep -w xgem_hd_hec_err  | awk '{print$7}'");
