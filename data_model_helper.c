@@ -207,7 +207,7 @@ uint64_t gpon_get_onu_ani_stats(const char* keyword)
     uint64_t res;
     char *str = NULL,*pos=NULL;
     char cmd[256];
-    sprintf(cmd, "cat /proc/trex/pmhd/l2dsrv | awk '{for(i=1;i<=NF;i++) if($i==\"%s\") print $(i+1)}'", keyword);
+    snprintf(cmd, sizeof(cmd), "cat /proc/trex/pmhd/l2dsrv | awk '{for(i=1;i<=NF;i++) if($i==\"%s\") print $(i+1)}'", keyword);
     fp = popen(cmd, "r");
     if(NULL == fp)
     {
@@ -264,7 +264,7 @@ uint64_t gpon_get_onu_ani_tc_pm(const char* keyword)
     uint64_t res;
     char *str = NULL,*pos=NULL;
     char cmd[256];
-    sprintf(cmd, "cat /proc/trex/pmhd/gpon | awk '{for(i=1;i<=NF;i++) if($i==\"%s\") print $(i+1)}'", keyword);
+    snprintf(cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | awk '{for(i=1;i<=NF;i++) if($i==\"%s\") print $(i+1)}'", keyword);
     fp = popen(cmd, "r");
     if(NULL == fp)
     {

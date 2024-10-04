@@ -113,7 +113,7 @@ bool dbg_if_init(void) {
     struct sockaddr_un servaddr;
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sun_family = AF_LOCAL;
-    strcpy(servaddr.sun_path, DEBUG_SERVER);
+    strlcpy(servaddr.sun_path, DEBUG_SERVER, sizeof(servaddr.sun_path));
 
     if(bind(fd, (const struct sockaddr*) &servaddr, sizeof(servaddr)) == -1) {
         SAH_TRACE_ERROR("Failed to bind name to socket: %s", strerror(errno));
