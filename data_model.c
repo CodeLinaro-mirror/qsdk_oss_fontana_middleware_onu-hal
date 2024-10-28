@@ -275,7 +275,7 @@ static void data_model_for_get_method(const char* name) {
         SAH_TRACE_INFO("path='%s' => XPON_ONU", path);
         blobmsg_add_u8(&b, "enable", s_onu_enabled ? 1 : 0);
         blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
-        blobmsg_add_string(&b, "equipment_id", "eqid");
+        blobmsg_add_string(&b, "equipment_id", gpon_get_equipment_id());
         if(str_equal(name, XPON_ONU_ONE, name_len)) 
         {
             SAH_TRACE_INFO("name='%s' => XPON_ONU_ONE", name);
@@ -324,18 +324,18 @@ static void data_model_for_get_method(const char* name) {
         SAH_TRACE_INFO("path='%s' => ETH_UNI_STATS", path);
         blobmsg_add_u64(&b, "bytes_sent", 0);
         blobmsg_add_u64(&b, "bytes_received", 0);
-        blobmsg_add_u64(&b, "packets_sent", 0);
-        blobmsg_add_u64(&b, "packets_received", 0);
-        blobmsg_add_u64(&b, "errors_sent", 0);
-        blobmsg_add_u64(&b, "errors_received", 0);
-        blobmsg_add_u64(&b, "unicast_packets_sent", 0);
-        blobmsg_add_u64(&b, "unicast_packets_received", 0);
-        blobmsg_add_u64(&b, "discard_packets_sent", 0);
-        blobmsg_add_u64(&b, "discard_packets_received", 0);
-        blobmsg_add_u64(&b, "multicast_packets_sent", 0);
-        blobmsg_add_u64(&b, "multicast_packets_received", 0);
-        blobmsg_add_u64(&b, "broadcast_packets_sent", 0);
-        blobmsg_add_u64(&b, "broadcast_packets_received", 0);
+        blobmsg_add_u64(&b, "packets_sent", gpon_get_eth_packets_sent());
+        blobmsg_add_u64(&b, "packets_received", gpon_get_eth_packets_received());
+        blobmsg_add_u64(&b, "errors_sent", gpon_get_eth_errors_sent());
+        blobmsg_add_u64(&b, "errors_received", gpon_get_eth_errors_received());
+        blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_unicast_packets_sent());
+        blobmsg_add_u64(&b, "unicast_packets_received", gpon_get_unicast_packets_received());
+        blobmsg_add_u64(&b, "discard_packets_sent", gpon_get_discard_packets_sent());
+        blobmsg_add_u64(&b, "discard_packets_received", gpon_get_discard_packets_received());
+        blobmsg_add_u64(&b, "multicast_packets_sent", gpon_get_multicast_packets_sent());
+        blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_multicast_packets_received());
+        blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_broadcast_packets_sent());
+        blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_broadcast_packets_received());
         blobmsg_add_u64(&b, "unknown_proto_packets_received", 0); // always 0
     }
     
@@ -376,7 +376,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_string(&b, "onu_state", gpon_get_pm_operationalstate());
         blobmsg_add_string(&b, "vendor_id", gpon_get_ploam_vendorid());
         blobmsg_add_string(&b, "serial_number", gpon_get_ploam_serialnumber());
-        blobmsg_add_u32(&b, "onu_id", 1);
+        blobmsg_add_u32(&b, "onu_id", gpon_get_ploam_onuid());
     }
 
     else if(str_equal(path, ANU_TC_PM_PHY, name_len)) 
@@ -439,7 +439,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u8(&b, "sf", 1);
         blobmsg_add_u8(&b, "sd", 1);
         blobmsg_add_u8(&b, "lcdg", gpon_get_PM_alam_lcdg());
-        blobmsg_add_u8(&b, "tf", 1);
+        blobmsg_add_u8(&b, "tf", gpon_get_pm_alarm_tf());
         blobmsg_add_u8(&b, "suf", 1);
         blobmsg_add_u8(&b, "mem", 1);
         blobmsg_add_u8(&b, "dact", 1);
@@ -465,13 +465,13 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_string(&b, "vendor_revision", gpon_get_pm_modulefirmwareversion());
         blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
         blobmsg_add_string(&b, "connector", "SC"); // always SC
-        blobmsg_add_u64(&b, "nominal_bit_rate_downstream", 0);
-        blobmsg_add_u64(&b, "nominal_bit_rate_upstream", 0);
-        blobmsg_add_u64(&b, "rx_power", 0);
-        blobmsg_add_u64(&b, "tx_power", 0);
-        blobmsg_add_u64(&b, "voltage", 0);
-        blobmsg_add_u64(&b, "bias", 0);
-        blobmsg_add_u64(&b, "temperature", 0);
+        blobmsg_add_string(&b, "nominal_bit_rate_downstream", "10 Gbps");
+        blobmsg_add_string(&b, "nominal_bit_rate_upstream", gpon_get_nbr_upstream());
+        blobmsg_add_string(&b, "rx_power", gpon_get_rxp_signal_level());
+        blobmsg_add_string(&b, "tx_power", gpon_get_txp_signal_level());
+        blobmsg_add_string(&b, "voltage", gpon_get_current_voltage());
+        blobmsg_add_string(&b, "bias", gpon_get_current_bias());
+        blobmsg_add_string(&b, "temperature",gpon_get_current_temperature());
     } 
     
     else if(str_equal(path, TRANSCEIVER_2, name_len)) 

@@ -68,6 +68,245 @@ uint64_t execute_int(const char* cmd)
     return res;
 }
 
+
+
+uint64_t gpon_get_unicast_packets_sent()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($2 ~ /^[0-9]+$/) sum += $3} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_unicast_packets_received()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $3} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_discard_packets_sent()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $6} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_discard_packets_received()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $6} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_multicast_packets_sent()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $4} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_multicast_packets_received()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $4} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_broadcast_packets_sent()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $5} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_broadcast_packets_received()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $5} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_eth_packets_sent()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt' | awk '{sum += $2} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_eth_packets_received()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt' | awk '{sum += $3} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_eth_errors_sent()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt' | awk '{sum += $6} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_eth_errors_received()
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt' | awk '{sum += $7} END {print sum}'");
+    return result;
+}
+
+// xpon_onu.{i}.ani.{i}.transceiver.{i} - nominal_bit_rate_upstream
+char* gpon_get_nbr_upstream()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("cat /proc/trex/gpon/global | grep 'us_rate' | cut -d'(' -f2 | cut -d')' -f1", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+
+}
+
+// xpon_onu.{i} - equipment id
+char* gpon_get_equipment_id()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'mib me 257' | grep Equipment_id | awk '{print $3}'", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
+// xpon_onu.{i} - name
+char* gpon_get_onu_name()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'mib me 256' | grep Serial_number | cut -d' ' -f4 | tr -d ','", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
+// xpon_onu.{i}.ani.{i}.transceiver.{i} - rx_power
+char* gpon_get_rxp_signal_level()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'info anig' | grep rx | awk '{print $2 $3 $4}'", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
+// xpon_onu.{i}.ani.{i}.transceiver.{i} - tx_power
+char* gpon_get_txp_signal_level()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'info anig' | grep tx | awk '{print $2 $3 $4}'", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
+// xpon_onu.{i}.ani.{i}.transceiver.{i} - voltage
+char* gpon_get_current_voltage()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'info anig' | grep vcc | awk '{print $2 $3}'", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
+// xpon_onu.{i}.ani.{i}.transceiver.{i} - bias
+char* gpon_get_current_bias()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'info anig' | grep bias | awk '{print $2 $3}'", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
+// xpon_onu.{i}.ani.{i}.transceiver.{i} - temperature
+char* gpon_get_current_temperature()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'info anig' | grep degree | awk '{print $2 $3}'", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
 // xpon_onu.{i} - version
 // xpon_onu.{i}.software_image.{i} - version
 // xpon_onu.{i}.ani.{i}.transceiver.{i} - module_version
@@ -364,6 +603,33 @@ uint64_t gpon_get_gem_directions()
 
 // ****************************************
 // xpon_onu.{i}.ani.{i}.tc.alarms
+
+int gpon_get_pm_alarm_tf()
+{
+    float num;
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'info anig' | grep tx | awk '{print $2}'", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        if (sscanf(sv, "%f", &num) == 1)
+        {
+            if (num>1995.3 && num<6309.6)
+            {
+                return 0;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+    }
+    return -1;
+}
 
 int gpon_get_PM_alam_los()
 {

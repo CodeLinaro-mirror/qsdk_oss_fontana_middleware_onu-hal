@@ -21,6 +21,25 @@ extern char snbuf[256];
 
 int execute(char *command, char *result);
 uint64_t execute_int(const char* cmd);
+char* gpon_get_equipment_id();
+uint64_t gpon_get_unicast_packets_sent();
+uint64_t gpon_get_unicast_packets_received();
+uint64_t gpon_get_discard_packets_sent();
+uint64_t gpon_get_discard_packets_received();
+uint64_t gpon_get_multicast_packets_sent();
+uint64_t gpon_get_multicast_packets_received();
+uint64_t gpon_get_broadcast_packets_sent();
+uint64_t gpon_get_broadcast_packets_received();
+uint64_t gpon_get_eth_packets_sent();
+uint64_t gpon_get_eth_packets_received();
+uint64_t gpon_get_eth_errors_sent();
+uint64_t gpon_get_eth_errors_received();
+char* gpon_get_rxp_signal_level();
+char* gpon_get_txp_signal_level();
+char* gpon_get_current_voltage();
+char* gpon_get_current_bias();
+char* gpon_get_current_temperature();
+char* gpon_get_nbr_upstream();
 char* gpon_get_pm_modulefirmwareversion();
 char* gpon_get_PM_status();
 char* gpon_get_PM_ponmode();
@@ -45,5 +64,6 @@ uint64_t gpon_get_gem_directions();
 int gpon_get_PM_alam_los();
 int gpon_get_PM_alam_lof();
 uint64_t gpon_get_PM_alam_lcdg();
+int gpon_get_pm_alarm_tf();
 
 #endif
