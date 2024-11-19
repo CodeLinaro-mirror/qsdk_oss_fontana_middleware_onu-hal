@@ -308,15 +308,18 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
     } 
     
-    else if(str_equal(path, ETH_UNI_1, name_len)) 
+    else if(str_equal(path, ETH_UNI_1, name_len))
     {
         SAH_TRACE_INFO("path='%s' => ETH_UNI_1", path);
         blobmsg_add_u8(&b, "enable", 1);
         blobmsg_add_string(&b, "name", "MyEthernetUNI");
+        blobmsg_add_string(&b, "alias", "alias");
         blobmsg_add_string(&b, "status", "Up");
         blobmsg_add_string(&b, "ani_list", "MyAni");
+        blobmsg_add_string(&b, "last_change", "last change");
+        blobmsg_add_string(&b, "lower_layers", "lower_layers");
         blobmsg_add_string(&b, "interdomain_id", "(VEIP,1025)");
-        blobmsg_add_string(&b, "interdomain_name", "MyDomain");
+        blobmsg_add_string(&b, "interdomain_name", "");
     } 
     
     else if (str_equal(path, ETH_UNI_STATS, name_len))
@@ -336,7 +339,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_multicast_packets_received());
         blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_broadcast_packets_sent());
         blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_broadcast_packets_received());
-        blobmsg_add_u64(&b, "unknown_proto_packets_received", 0); // always 0
+        blobmsg_add_u64(&b, "unknown_proto_packets_received", 0);
     }
     
     else if(str_equal(path, ANI_1, name_len)) 
@@ -344,27 +347,30 @@ static void data_model_for_get_method(const char* name) {
         SAH_TRACE_INFO("path='%s' => ANI_1", path);
         blobmsg_add_u8(&b, "enable", s_ani_one_enabled ? 1 : 0);
         blobmsg_add_string(&b, "name", "MyANI");
-        blobmsg_add_string(&b, "status", gpon_get_PM_status() );
+        blobmsg_add_string(&b, "alias", "alias");
+        blobmsg_add_string(&b, "last_change", gpon_get_accum_time());
+        blobmsg_add_string(&b, "status", gpon_get_PM_status());
         blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
+        blobmsg_add_u8(&b, "transceiver_number_of_entries", 1);
     } 
     
     else if(str_equal(path, ANI_STATS, name_len))
     {
         SAH_TRACE_INFO("path='%s' => ANI_STATS", path);
         blobmsg_add_u64(&b, "bytes_sent", gpon_get_onu_ani_stats("us_byte_out"));
-        blobmsg_add_u64(&b, "bytes_received", gpon_get_onu_ani_stats("ds_byte_in"));
-        blobmsg_add_u64(&b, "packets_sent", gpon_get_ani_stats_packets_sent());
-        blobmsg_add_u64(&b, "packets_received", gpon_get_ani_stats_packets_received());
-        blobmsg_add_u64(&b, "errors_sent", 0);
-        blobmsg_add_u64(&b, "errors_received", 0);
-        blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_onu_ani_stats("us_ucast"));
-        blobmsg_add_u64(&b, "unicast_packets_received", gpon_get_onu_ani_stats("ds_ucast"));
-        blobmsg_add_u64(&b, "discard_packets_sent", 0);
-        blobmsg_add_u64(&b, "discard_packets_received", 0);
-        blobmsg_add_u64(&b, "multicast_packets_sent", gpon_get_onu_ani_stats("us_mcast"));
-        blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_onu_ani_stats("ds_mcast"));
-        blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_onu_ani_stats("us_bcast"));
-        blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_onu_ani_stats("ds_bcast"));
+        blobmsg_add_u64(&b, "bytes_received", gpon_get_onu_ani_stats("ds_byte_in"));  
+        blobmsg_add_u64(&b, "packets_sent", gpon_get_ani_stats_packets_sent());  
+        blobmsg_add_u64(&b, "packets_received", gpon_get_ani_stats_packets_received());  
+        blobmsg_add_u64(&b, "errors_sent", gpon_get_ani_errors_sent());  
+        blobmsg_add_u64(&b, "errors_received", gpon_get_ani_errors_received()); 
+        blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_onu_ani_stats("us_ucast"));  
+        blobmsg_add_u64(&b, "unicast_packets_received", gpon_get_onu_ani_stats("ds_ucast"));  
+        blobmsg_add_u64(&b, "discard_packets_sent", gpon_get_ani_stats_discard_packets_sent());  
+        blobmsg_add_u64(&b, "discard_packets_received", gpon_get_ani_stats_discard_packets_sent());  
+        blobmsg_add_u64(&b, "multicast_packets_sent", gpon_get_onu_ani_stats("us_mcast"));  
+        blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_onu_ani_stats("ds_mcast"));  
+        blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_onu_ani_stats("us_bcast"));  
+        blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_onu_ani_stats("ds_bcast"));  
         blobmsg_add_u64(&b, "unknown_proto_packets_received", 0); // always 0
 
     }
@@ -373,82 +379,82 @@ static void data_model_for_get_method(const char* name) {
         SAH_TRACE_INFO("path='%s' => ONU_ACTIVATION", path);
         char onu_state[3];
         snprintf(onu_state, 3, "O%u", s_onu_state);
-        blobmsg_add_string(&b, "onu_state", gpon_get_pm_operationalstate());
-        blobmsg_add_string(&b, "vendor_id", gpon_get_ploam_vendorid());
-        blobmsg_add_string(&b, "serial_number", gpon_get_ploam_serialnumber());
-        blobmsg_add_u32(&b, "onu_id", gpon_get_ploam_onuid());
+        blobmsg_add_string(&b, "onu_state", gpon_get_pm_operationalstate());  
+        blobmsg_add_string(&b, "vendor_id", gpon_get_ploam_vendorid());  
+        blobmsg_add_string(&b, "serial_number", gpon_get_ploam_serialnumber());  
+        blobmsg_add_u32(&b, "onu_id", gpon_get_ploam_onuid());  
     }
 
     else if(str_equal(path, ANU_TC_PM_PHY, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => ANU_TC_PM_PHY", path);
-        blobmsg_add_u64(&b, "corrected_fec_bytes", gpon_get_onu_ani_tc_pm("fec_codewd_corrected"));
-        blobmsg_add_u64(&b, "corrected_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_corrected"));
-        blobmsg_add_u64(&b, "uncorrectable_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_uncorrected"));
-        blobmsg_add_u64(&b, "total_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd"));
-        blobmsg_add_u64(&b, "psbd_hec_error_count", gpon_get_onu_ani_tc_pm("xgem_hd_hec_err"));
-        blobmsg_add_u64(&b, "header_hec_error_count", gpon_get_onu_ani_tc_pm("fs_hec_err"));
-        blobmsg_add_u64(&b, "unknown_profile", gpon_get_onu_ani_tc_pm("unknown_bst_prof"));
+        blobmsg_add_u64(&b, "corrected_fec_bytes", gpon_get_onu_ani_tc_pm("*fec_byte_corrected"));  
+        blobmsg_add_u64(&b, "corrected_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_corrected"));  
+        blobmsg_add_u64(&b, "uncorrectable_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_uncorrected"));  
+        blobmsg_add_u64(&b, "total_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd"));  
+        blobmsg_add_u64(&b, "psbd_hec_error_count", gpon_get_onu_ani_tc_pm("xgem_hd_hec_err"));  
+        blobmsg_add_u64(&b, "header_hec_error_count", gpon_get_onu_ani_tc_pm("fs_hec_err"));  
+        blobmsg_add_u64(&b, "unknown_profile", gpon_get_onu_ani_tc_pm("unknown_bst_prof"));  
     }
     
     else if(str_equal(path, TC_PM_GEM, name_len)) {
-        blobmsg_add_u64(&b, "frames_sent", 0); 
-        blobmsg_add_u64(&b, "frames_received", 0);
-        blobmsg_add_u64(&b, "frame_header_hec_errors", 0);
-        blobmsg_add_u64(&b, "key_errors", 0);
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(1));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(1));  
+        blobmsg_add_u64(&b, "frame_header_hec_errors", gpon_get_frame_header_hec_errors());  
+        blobmsg_add_u64(&b, "key_errors", gpon_get_xgem_key_errors());  
     }
     
     else if(str_equal(path, TC_PM_PLOAM, name_len)){
-        blobmsg_add_u64(&b, "mic_errors", gpon_get_ploam_micerrors()); 
-        blobmsg_add_u64(&b, "downstream_message_count", gpon_get_downstream_message_count());
-        blobmsg_add_u64(&b, "ranging_time", gpon_get_ranging_time());
-        blobmsg_add_u64(&b, "upstream_message_count", gpon_get_upstream_message_count());
+        blobmsg_add_u64(&b, "mic_errors", gpon_get_ploam_micerrors());  
+        blobmsg_add_string(&b, "downstream_message_count", gpon_get_ploam_rxmessagecount());  
+        blobmsg_add_u64(&b, "ranging_time", gpon_get_ranging_time());  
+        blobmsg_add_string(&b, "upstream_message_count", gpon_get_ploam_txmessagecount());  
     }
     
     else if(str_equal(path, TC_PM_OMCI, name_len)){
-        blobmsg_add_u64(&b, "baseline_messages_received", gpon_get_omci_baselinemessagecount()); 
-        blobmsg_add_u64(&b, "extended_messages_received", gpon_get_omci_extendedmessagecount());
-        blobmsg_add_u64(&b, "mic_errors", gpon_get_omci_micerrors());
+        blobmsg_add_u64(&b, "baseline_messages_received", gpon_get_omci_baselinemessagecount());  
+        blobmsg_add_u64(&b, "extended_messages_received", gpon_get_omci_extendedmessagecount());  
+        blobmsg_add_u64(&b, "mic_errors", gpon_get_omci_micerrors());  
     }
     
     else if(str_equal(path, GEM_PORT_1, name_len)) {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_1", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_ploam_onuid());
-        blobmsg_add_string(&b, "direction", "unidirectional" );
-        blobmsg_add_string(&b, "port_type", "multicast");
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id());  
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(1));  
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(1));  
     } 
     
     else if (str_equal(path, GEM_PORT_PM, name_len)) 
     {
-        blobmsg_add_u64(&b, "frames_sent", 0); 
-        blobmsg_add_u64(&b, "frames_received", 0);
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(1));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(1));  
     }
     
     else if(str_equal(path, PERF_THRESHOLDS, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => PERF_THRESHOLDS", path);
-        blobmsg_add_u32(&b, "signal_fail", 8);
-        blobmsg_add_u32(&b, "signal_degrade", 10);
+        blobmsg_add_u32(&b, "signal_fail", gpon_get_tc_perf_signal_fail());  
+        blobmsg_add_u32(&b, "signal_degrade", gpon_get_tc_perf_signal_fail());  
     } 
     
-    else if(str_equal(path, ALARMS, name_len)) 
+    else if(str_equal(path, ALARMS, name_len))
     {
         SAH_TRACE_INFO("path='%s' => ALARMS", path);
-        blobmsg_add_u8(&b, "los", gpon_get_PM_alam_los());
-        blobmsg_add_u8(&b, "lof", gpon_get_PM_alam_lof());
-        blobmsg_add_u8(&b, "sf", 1);
-        blobmsg_add_u8(&b, "sd", 1);
-        blobmsg_add_u8(&b, "lcdg", gpon_get_PM_alam_lcdg());
-        blobmsg_add_u8(&b, "tf", gpon_get_pm_alarm_tf());
-        blobmsg_add_u8(&b, "suf", 1);
-        blobmsg_add_u8(&b, "mem", 1);
-        blobmsg_add_u8(&b, "dact", 1);
-        blobmsg_add_u8(&b, "dis", 1);
-        blobmsg_add_u8(&b, "mis", 1);
-        blobmsg_add_u8(&b, "pee", 1);
-        blobmsg_add_u8(&b, "rdi", 1);
-        blobmsg_add_u8(&b, "lods", 1);
-        blobmsg_add_u8(&b, "rogue", 1);
+        blobmsg_add_u8(&b, "los", gpon_get_pm_alarm_los());  
+        blobmsg_add_u8(&b, "lof", gpon_get_pm_alarm_lof());  
+        blobmsg_add_u8(&b, "sf", gpon_get_pm_alarm_sf());  
+        blobmsg_add_u8(&b, "sd", gpon_get_pm_alarm_sd());  
+        blobmsg_add_u8(&b, "lcdg", gpon_get_pm_alarm_lcdg());  
+        blobmsg_add_u8(&b, "tf", gpon_get_pm_alarm_tf());  
+        blobmsg_add_u8(&b, "suf", gpon_get_pm_alarm_suf());  
+        blobmsg_add_u8(&b, "mem", gpon_get_pm_alarm_mem());  
+        blobmsg_add_u8(&b, "dact", gpon_get_pm_alarm_dact());  
+        blobmsg_add_u8(&b, "dis", gpon_get_pm_alarm_dis());  
+        blobmsg_add_u8(&b, "mis", 0);  
+        blobmsg_add_u8(&b, "pee", 0);  
+        blobmsg_add_u8(&b, "rdi", 0);  
+        blobmsg_add_u8(&b, "lods", gpon_get_pm_alarm_lods());  
+        blobmsg_add_u8(&b, "rogue", gpon_get_pm_alarm_rogue());  
     } 
     
     else if(str_equal(path, TRANSCEIVER_1, name_len)) 
@@ -460,27 +466,27 @@ static void data_model_for_get_method(const char* name) {
 
         blobmsg_add_u32(&b, "id", 0);
         blobmsg_add_u32(&b, "identifier", 2);
-        blobmsg_add_string(&b, "vendor_name", "Qualcomm");
-        blobmsg_add_string(&b, "vendor_part_number", "QCF8000");
-        blobmsg_add_string(&b, "vendor_revision", gpon_get_pm_modulefirmwareversion());
-        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
-        blobmsg_add_string(&b, "connector", "SC"); // always SC
-        blobmsg_add_string(&b, "nominal_bit_rate_downstream", "10 Gbps");
-        blobmsg_add_string(&b, "nominal_bit_rate_upstream", gpon_get_nbr_upstream());
-        blobmsg_add_string(&b, "rx_power", gpon_get_rxp_signal_level());
-        blobmsg_add_string(&b, "tx_power", gpon_get_txp_signal_level());
-        blobmsg_add_string(&b, "voltage", gpon_get_current_voltage());
-        blobmsg_add_string(&b, "bias", gpon_get_current_bias());
-        blobmsg_add_string(&b, "temperature",gpon_get_current_temperature());
+        blobmsg_add_string(&b, "vendor_name", "Qualcomm");  
+        blobmsg_add_string(&b, "vendor_part_number", "QCF8000");  
+        blobmsg_add_string(&b, "vendor_revision", gpon_get_pm_modulefirmwareversion());  
+        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());  
+        blobmsg_add_string(&b, "connector", "SC"); 
+        blobmsg_add_string(&b, "nominal_bit_rate_downstream", gpon_get_nominal_bitrate());  
+        blobmsg_add_string(&b, "nominal_bit_rate_upstream", gpon_get_nominal_bitrate());  
+        blobmsg_add_string(&b, "rx_power", gpon_get_rxp_signal_level());  
+        blobmsg_add_string(&b, "tx_power", gpon_get_txp_signal_level());  
+        blobmsg_add_string(&b, "voltage", gpon_get_current_voltage());  
+        blobmsg_add_string(&b, "bias", gpon_get_current_bias());  
+        blobmsg_add_string(&b, "temperature",gpon_get_current_temperature());  
     } 
     
     else if(str_equal(path, TRANSCEIVER_2, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => TRANSCEIVER_2", path);
-        blobmsg_add_u32(&b, "id", 1);
-        blobmsg_add_u32(&b, "identifier", 25);
-        blobmsg_add_string(&b, "vendor_name", "Qualcomm");
-        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
+        blobmsg_add_u32(&b, "id", 1);  
+        blobmsg_add_u32(&b, "identifier", 25);  
+        blobmsg_add_string(&b, "vendor_name", "Qualcomm");  
+        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());  
     } 
     
     else 

@@ -68,58 +68,355 @@ uint64_t execute_int(const char* cmd)
     return res;
 }
 
+char* gpon_get_veip_interdomainname(int index)
+{
+    char sv[256] = {'\0'}, buffer[256]= {'\0'};
+    int ret = RETURN_ERR;
+    char buf1[32]= {'\0'}, buf2[32]= {'\0'} ;
+    char buf3[32]= {'\0'}, buf4[32]= {'\0'} ;
 
+    ret = execute("omci -c 'mib me 329' | grep -w 'Interdomain_name:' | awk '{print $3}'", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+	strlcat(buf1, gpon_get_veip_ethernetflow_egresstagged(index), sizeof(retValue));
+	strlcat(buf2, gpon_get_veip_ethernetflow_egress_qvlan_vid(index), sizeof(retValue));
+	strlcat(buf3, gpon_get_veip_ethernetflow_egress_qvlan_pcp(index), sizeof(retValue));
+	strlcat(buf4, gpon_get_veip_ethernetflow_egress_qvlan_dei(index), sizeof(retValue));
+	ret = strlen(sv);
+	if (ret < 2)
+	    snprintf(buffer, strlen(buf1)+strlen(buf2)+strlen(buf3)+strlen(buf4)+8,  "www#%s-%s-%s-%s",buf1, buf2, buf3, buf4);
+	else
+	    snprintf(buffer, strlen(buf1)+strlen(buf2)+strlen(buf3)+strlen(buf4)+strlen(sv)+5,"%s#%s-%s-%s-%s", sv, buf1, buf2, buf3, buf4);
+        memset(retValue, 0, 256);
+	    strlcpy(retValue, buffer, strlen(buffer) + 1);
+        return retValue;
+    }
+}
 
-uint64_t gpon_get_unicast_packets_sent()
+char* gpon_get_veip_ethernetflow_egresstagged(int index)
+{
+    char sv[32] = {'\0'};
+    int ret = RETURN_ERR;
+    
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "omci -c 'cf ethflow veip_egress' | sed -ne '/EthernetFlow.Egress/,$ p' | awk {'print $2'} |  awk 'NR==%d' | tr -d ',' | awk '{sum += $1} END {print sum}'", index+3);
+    ret = execute(cmd, sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+        if(strcmp(sv,"1") == 0)
+        {
+            strlcpy(retValue, "Single", strlen("Single")+1);
+        }   
+        else if(strcmp(sv,"2") == 0)
+        {
+            strlcpy(retValue, "Double", strlen("Double")+1);
+        }
+        else
+        {
+            strlcpy(retValue, "Single", strlen("Single")+1);
+        }
+	    return retValue;
+    }
+    return "-1";
+}
+
+char* gpon_get_veip_ethernetflow_egress_qvlan_vid(int index)
+{
+    char sv[32] = {'\0'};
+    int ret = RETURN_ERR;
+
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "omci -c 'cf ethflow veip_egress' | sed -ne '/EthernetFlow.Egress/,$ p' | awk {'print $5'} |  awk 'NR==%d' | tr -d ',' | awk '{sum += $1} END {print sum}'", index+3);
+    ret = execute(cmd, sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+	strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+}
+
+char* gpon_get_veip_ethernetflow_egress_qvlan_pcp(int index)
+{
+    char sv[32] = {'\0'};
+    int ret = RETURN_ERR;
+
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "omci -c 'cf ethflow veip_egress' | sed -ne '/EthernetFlow.Egress/,$ p' | awk {'print $6'} |  awk 'NR==%d' | tr -d ',' | awk '{sum += $1} END {print sum}'", index+3);
+    ret = execute(cmd, sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+	strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+}
+
+char* gpon_get_veip_ethernetflow_egress_qvlan_dei(int index)
+{
+    char sv[32] = {'\0'};
+    int ret = RETURN_ERR;
+
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "omci -c 'cf ethflow veip_egress' | sed -ne '/EthernetFlow.Egress/,$ p' | awk {'print $7'} |  awk 'NR==%d' | tr -d ',' | awk '{sum += $1} END {print sum}'", index+3);
+    ret = execute(cmd, sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+	strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+}
+
+int gpon_get_gem_transmittedframes(int index)
+{
+    int result;
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'tx frames'  -A65536 | awk '{print $4}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+2);
+    result = execute_int(cmd);
+    return result;
+}
+
+int gpon_get_gem_receivedframes(int index)
+{
+    int result;
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'rx frames'  -A65536 | awk '{print $9}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+2);
+    result = execute_int(cmd);
+    return result;
+}
+
+char* gpon_get_ploam_txmessagecount()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR;
+    char *err;
+    long sumhecerr=0;
+    printf("================ inside txmessagecount : sumhecerr is : %lu ==============\n", sumhecerr);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_bst_prof' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_assign_onuid' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_ranging_time' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_deact_onuid'  | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_dis_sn' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_assign_allocid' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_sleep_allow' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_adjust_tx_wl' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_sys_prof' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_protec_ctl' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_pwr_cons_inq' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_proprietary' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_mic_err' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_req_reg' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_key_ctl' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_cali_req' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_tuning_ctl' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_ch_prof' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_change_pwrl' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_reboot' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_unknown' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        snprintf(retValue, sizeof(retValue), "%lu", sumhecerr);
+        return retValue;
+    }
+}
+
+char* gpon_get_ploam_rxmessagecount()
+{
+    char sv[32] = {'\0'};
+    int ret = RETURN_ERR;
+    char *err;
+    long sumhecerr=0;
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_sn_onu' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_reg' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_ack' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_key_rpt' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_pwr_cons_rpt' | awk '{print$2}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_reg_zseq' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_ack_zseq' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_tuning_resp' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    ret = execute("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_sleep_req' | awk '{print$5}'", sv);
+    sumhecerr+=strtoul(sv,&err,10);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        snprintf(retValue, sizeof(retValue), "%lu", sumhecerr);
+        return retValue;
+    }
+}
+
+char* gpon_get_gem_directions(int index)
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR;
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "omci -c 'gpon gem' | grep Mcast -A65536 | awk '{print $10}' | awk 'NR==%d'", index+2);
+    ret = execute(cmd, sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        if(strcmp(sv,"0")==0)
+        {
+            memset(retValue, 0, 256);
+            strlcpy(retValue, "Bidirectional", strlen("Bidirectional")+1);
+            return retValue;
+        }  
+        else
+        {
+            memset(retValue, 0, 256);
+            strlcpy(retValue, "Unidirectional", strlen("Unidirectional")+1);
+            return retValue;
+        }
+    }
+    return "-1";
+}
+
+char* gpon_get_gem_traffctype(int index)
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR;
+    int res=RETURN_ERR;
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "cat /proc/trex/gpon/xgem | grep 'encrypt' | grep 'intid=' | awk '{print$7}' | awk 'NR==%d' | cut -d '(' -f2 | cut -d ')' -f1", index);
+    ret = execute(cmd, sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        res=strcmp(sv,"ucast");
+        if(res==0)
+        {
+            memset(retValue, 0, 256);
+            strlcpy(retValue, "Unidirectional", strlen("Unidirectional")+1);
+            return retValue;
+        }
+        else
+        {
+            memset(retValue, 0, 256);
+            strlcpy(retValue, "Bidirectional", strlen("Bidirectional")+1);
+            return retValue;
+        }
+    }
+    return "-1";
+}
+
+uint64_t gpon_get_unicast_packets_sent()  //ifIn UcastPkts
 {
     uint64_t result;
     result=execute_int("omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($2 ~ /^[0-9]+$/) sum += $3} END {print sum}'");
     return result;
 }
 
-uint64_t gpon_get_unicast_packets_received()
+uint64_t gpon_get_unicast_packets_received()  //ifOut UcastPkts
 {
     uint64_t result;
     result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $3} END {print sum}'");
     return result;
 }
 
-uint64_t gpon_get_discard_packets_sent()
+uint64_t gpon_get_discard_packets_sent()  //ifIn Discard
+{
+    uint64_t result;
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($2 ~ /^[0-9]+$/) sum += $6} END {print sum}'");
+    return result;
+}
+
+uint64_t gpon_get_discard_packets_received()  //ifOut Discard
 {
     uint64_t result;
     result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $6} END {print sum}'");
     return result;
 }
 
-uint64_t gpon_get_discard_packets_received()
+uint64_t gpon_get_multicast_packets_sent()  //ifIn McastPkts
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $6} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($2 ~ /^[0-9]+$/) sum += $4} END {print sum}'");
     return result;
 }
 
-uint64_t gpon_get_multicast_packets_sent()
-{
-    uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $4} END {print sum}'");
-    return result;
-}
-
-uint64_t gpon_get_multicast_packets_received()
+uint64_t gpon_get_multicast_packets_received()  //ifOut McastPkts
 {
     uint64_t result;
     result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $4} END {print sum}'");
     return result;
 }
 
-uint64_t gpon_get_broadcast_packets_sent()
+uint64_t gpon_get_broadcast_packets_sent() //ifIn BcastPkts
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $5} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($2 ~ /^[0-9]+$/) sum += $5} END {print sum}'");
     return result;
 }
 
-uint64_t gpon_get_broadcast_packets_received()
+uint64_t gpon_get_broadcast_packets_received()  //ifOut BcastPkts
 {
     uint64_t result;
     result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $5} END {print sum}'");
@@ -129,33 +426,33 @@ uint64_t gpon_get_broadcast_packets_received()
 uint64_t gpon_get_eth_packets_sent()
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt' | awk '{sum += $2} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt' | awk '{sum += $3} END {print sum}'");
     return result;
 }
 
 uint64_t gpon_get_eth_packets_received()
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt' | awk '{sum += $3} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt' | awk '{sum += $2} END {print sum}'");
     return result;
 }
 
 uint64_t gpon_get_eth_errors_sent()
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt' | awk '{sum += $6} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt' | awk '{sum += $7} END {print sum}'");
     return result;
 }
 
 uint64_t gpon_get_eth_errors_received()
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt' | awk '{sum += $7} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt' | awk '{sum += $6} END {print sum}'");
     return result;
 }
 
 // xpon_onu.{i}.ani.{i}.transceiver.{i} - nominal_bit_rate_upstream
-char* gpon_get_nbr_upstream()
+char* gpon_get_nominal_bitrate()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR, itemp;
@@ -171,7 +468,6 @@ char* gpon_get_nbr_upstream()
         return retValue;
     }
     return "-1";
-
 }
 
 // xpon_onu.{i} - equipment id
@@ -328,6 +624,25 @@ char* gpon_get_pm_modulefirmwareversion()
     return "-1";
 }
 
+char* gpon_get_accum_time()
+{
+    // char sv[256] = {'\0'};
+    // int ret = RETURN_ERR, itemp;
+    // ret = execute("cat /proc/trex/gpon/pm ", sv);
+    // if(RETURN_OK != ret)
+    // {
+    //     printf("\nError %s\n", __func__);
+    // }
+    // else
+    // {
+    //     memset(retValue, 0, 256);
+    //     strlcpy(retValue, sv, strlen(sv) + 1);
+    //     return retValue;
+    // }
+    // return "-1";
+    return "accum_time";
+}
+
 // xpon_onu.{i}.ani.{i} - status
 char* gpon_get_PM_status()
 {
@@ -465,6 +780,20 @@ uint64_t gpon_get_onu_ani_stats(const char* keyword)
     return res;
 }
 
+uint64_t gpon_get_ani_errors_sent()
+{
+    uint64_t result;
+    result = (gpon_get_onu_ani_stats("us_drop_mem_ov") + gpon_get_onu_ani_stats("us_drop_lkp_ov") + gpon_get_onu_ani_stats("us_drop_treat") + gpon_get_onu_ani_stats("rx_mac_err") + gpon_get_onu_ani_stats("rx_runt") + gpon_get_onu_ani_stats("rx_fcs_err") + gpon_get_onu_ani_stats("rx_pause"));
+    return result;
+}
+
+uint64_t gpon_get_ani_errors_received()
+{
+    uint64_t result;
+    result = (gpon_get_onu_ani_stats("ds_drop_mem_ov") + gpon_get_onu_ani_stats("ds_drop_lkp_ov") + gpon_get_onu_ani_stats("ds_drop_treat") + gpon_get_onu_ani_stats("tx_pause"));
+    return result;
+}
+
 uint64_t gpon_get_ani_stats_packets_sent()
 {
     uint64_t result;
@@ -593,10 +922,10 @@ uint64_t gpon_get_ploam_onuid()
     return result;
 }
 
-uint64_t gpon_get_gem_directions()
-{
-    return -1;
-}
+// uint64_t gpon_get_gem_directions()
+// {
+//     return -1;
+// }
 
 // *********************************
 
@@ -604,34 +933,93 @@ uint64_t gpon_get_gem_directions()
 // ****************************************
 // xpon_onu.{i}.ani.{i}.tc.alarms
 
+// int gpon_get_pm_alarm_tf_old()
+// {
+//     float num;
+//     char sv[256] = {'\0'};
+//     int ret = RETURN_ERR, itemp;
+//     ret = execute("omci -c 'info anig' | grep tx | awk '{print $2}'", sv);
+//     if(RETURN_OK != ret)
+//     {
+//         printf("\nError %s\n", __func__);
+//     }
+//     else
+//     {
+//         if (sscanf(sv, "%f", &num) == 1)
+//         {
+//             if (num>1995.3 && num<6309.6)
+//             {
+//                 return 0;
+//             }
+//             else
+//             {
+//                 return 1;
+//             }
+//         }
+//     }
+//     return -1;
+// }
+
 int gpon_get_pm_alarm_tf()
 {
-    float num;
-    char sv[256] = {'\0'};
-    int ret = RETURN_ERR, itemp;
-    ret = execute("omci -c 'info anig' | grep tx | awk '{print $2}'", sv);
+    int result;
+    result=execute_int("cat /proc/trex/gpon/alarm | grep -w TF | awk '{ print $3 }'");
+    return result;
+}
+
+int gpon_get_pm_alarm_suf()
+{
+    int result;
+    result=execute_int("cat /proc/trex/gpon/alarm | grep -w SUF | awk '{ print $3 }'");
+    return result;
+}
+
+int gpon_get_pm_alarm_mem()
+{
+    int result;
+    result=execute_int("cat /proc/trex/gpon/alarm | grep -w MEM | awk '{ print $3 }'");
+    return result;
+}
+
+int gpon_get_pm_alarm_dact()
+{
+    char sv[256] = {'\0'}, conustate[256] = {'\0'};
+    int ret = RETURN_ERR,result=RETURN_ERR;
+    int msgonuid = RETURN_ERR;
+    ret = execute("cat /proc/trex/gpon/onu | grep -w state | cut -c 7-8", sv);
     if(RETURN_OK != ret)
     {
         printf("\nError %s\n", __func__);
     }
     else
     {
-        if (sscanf(sv, "%f", &num) == 1)
+        sscanf(sv, "%s", conustate);
+        memset(sv, 0, 256);
+        ret = execute("cat /proc/trex/gpon/edr | grep msg_deact_onuid -w | awk '{ print$5}'", sv);
+        if(RETURN_OK != ret)
         {
-            if (num>1995.3 && num<6309.6)
+            printf("\nError %s\n", __func__);
+        }
+        else
+        {
+            sscanf(sv, "%d", &msgonuid);
+            // (strcmp(conustate, "O5") != 0)
+            if(msgonuid>0 && strcmp(conustate, "O5") != 0)
             {
-                return 0;
+                // Active
+                return 1;
             }
             else
             {
-                return 1;
+                // Inactive
+                return 0;
             }
         }
     }
     return -1;
 }
 
-int gpon_get_PM_alam_los()
+int gpon_get_pm_alarm_los()
 {
     uint64_t result;
     result=execute_int("grep -w rx_los /proc/trex/io/pon | awk '{print $2}'");
@@ -642,7 +1030,7 @@ int gpon_get_PM_alam_los()
     return 0;
 }
 
-int gpon_get_PM_alam_lof()
+int gpon_get_pm_alarm_lof()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR, itemp;
@@ -658,11 +1046,139 @@ int gpon_get_PM_alam_lof()
     return 0;
 }
 
-uint64_t gpon_get_PM_alam_lcdg()
+// uint64_t gpon_get_pm_alarm_lcdg_old()
+// {
+//     uint64_t result;
+//     result=execute_int("cat /proc/trex/pmhd/gpon | grep -w xgem_hd_hec_err  | awk '{print$7}'");
+//     return result;
+// }
+
+uint64_t gpon_get_pm_alarm_lcdg()
 {
     uint64_t result;
-    result=execute_int("cat /proc/trex/pmhd/gpon | grep -w xgem_hd_hec_err  | awk '{print$7}'");
+    result=execute_int("cat /proc/trex/gpon/alarm | grep -w LCDG | awk '{ print $3 }'");
     return result;
 }
 
+uint64_t gpon_get_pm_alarm_rogue()
+{
+    uint64_t result;
+    result=execute_int("grep -w tx_fault /proc/trex/io/pon | awk '{print $2}'");
+    if (result == 1)
+    {
+        return 1;
+    }
+    return 0;
+}
 
+int gpon_get_pm_alarm_sf()
+{
+    int result;
+    result=execute_int("cat /proc/trex/gpon/alarm | grep ' SF' | awk {'print $3'}");
+    return result;
+}
+
+int gpon_get_pm_alarm_sd()
+{
+    int result;
+    result=execute_int("cat /proc/trex/gpon/alarm | grep ' SD' | awk {'print $3'}");
+    return result;
+}
+
+int gpon_get_gem_port_id()
+{
+    int result;
+    result=execute_int("omci -c 'gpon gem' | grep Gem -A65536 | awk '{print $1}' | awk 'NR==3' | cut -d '(' -f1");
+    return result;
+}
+
+int gpon_get_pm_alarm_dis()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR,res=RETURN_ERR;
+    int msgonuid = RETURN_ERR;
+    ret = execute("cat /proc/trex/gpon/alarm | grep -w DIS | awk '{ print $3 }'", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        sscanf(sv, "%d", &msgonuid);
+        memset(sv, 0, 256);
+        ret = execute("cat /proc/trex/gpon/alarm | grep -w DIS | awk '{ print $4 }'", sv);
+        if(RETURN_OK != ret)
+        {
+            printf("\nError %s\n", __func__);
+        }
+        else
+        {
+            if(msgonuid>0 && strcmp(sv, "-")!=0)
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+    }
+    return -1;
+}
+
+int gpon_get_pm_alarm_lods()
+{
+    int result;
+    result=execute_int("cat /proc/trex/gpon/alarm | grep -w LODS | awk '{ print $3 }'");
+    return result;
+}
+
+char* gpon_get_tc_perf_signal_fail()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'mib me 263' | grep -w SF_threshold | awk '{print$3}' | cut -d '(' -f2 |cut -d ')' -f1", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
+char* gpon_get_tc_perf_signal_degrade()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'mib me 263' | grep -w SD_threshold | awk '{print$3}' | cut -d '(' -f2 |cut -d ')' -f1", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
+int gpon_get_frame_header_hec_errors()
+{
+    int result;
+    result=execute_int("omci -c 'gpon cnt global' | grep xgem_hd_hec_err= | awk '{print $2}' | cut -d '=' -f2");
+    return result;
+}
+
+int gpon_get_xgem_key_errors()
+{
+    int result;
+    result=execute_int("omci -c 'gpon cnt global' | grep xgem_key_err= | awk '{print $2}' | cut -d '=' -f2");
+    return result;
+}
