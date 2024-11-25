@@ -366,7 +366,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_onu_ani_stats("us_ucast"));  
         blobmsg_add_u64(&b, "unicast_packets_received", gpon_get_onu_ani_stats("ds_ucast"));  
         blobmsg_add_u64(&b, "discard_packets_sent", gpon_get_ani_stats_discard_packets_sent());  
-        blobmsg_add_u64(&b, "discard_packets_received", gpon_get_ani_stats_discard_packets_sent());  
+        blobmsg_add_u64(&b, "discard_packets_received", gpon_get_ani_stats_discard_packets_received());  
         blobmsg_add_u64(&b, "multicast_packets_sent", gpon_get_onu_ani_stats("us_mcast"));  
         blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_onu_ani_stats("ds_mcast"));  
         blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_onu_ani_stats("us_bcast"));  
@@ -434,7 +434,7 @@ static void data_model_for_get_method(const char* name) {
     {
         SAH_TRACE_INFO("path='%s' => PERF_THRESHOLDS", path);
         blobmsg_add_u32(&b, "signal_fail", gpon_get_tc_perf_signal_fail());  
-        blobmsg_add_u32(&b, "signal_degrade", gpon_get_tc_perf_signal_fail());  
+        blobmsg_add_u32(&b, "signal_degrade", gpon_get_tc_perf_signal_degrade());  
     } 
     
     else if(str_equal(path, ALARMS, name_len))

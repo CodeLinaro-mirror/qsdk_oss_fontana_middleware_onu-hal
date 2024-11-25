@@ -1133,40 +1133,18 @@ int gpon_get_pm_alarm_lods()
     return result;
 }
 
-char* gpon_get_tc_perf_signal_fail()
+int gpon_get_tc_perf_signal_fail()
 {
-    char sv[256] = {'\0'};
-    int ret = RETURN_ERR, itemp;
-    ret = execute("omci -c 'mib me 263' | grep -w SF_threshold | awk '{print$3}' | cut -d '(' -f2 |cut -d ')' -f1", sv);
-    if(RETURN_OK != ret)
-    {
-        printf("\nError %s\n", __func__);
-    }
-    else
-    {
-        memset(retValue, 0, 256);
-        strlcpy(retValue, sv, strlen(sv) + 1);
-        return retValue;
-    }
-    return "-1";
+    int result;
+    result=execute_int("omci -c 'mib me 263' | grep -w SF_threshold | awk '{print$3}' | cut -d '(' -f2 |cut -d ')' -f1");
+    return result;
 }
 
-char* gpon_get_tc_perf_signal_degrade()
+int gpon_get_tc_perf_signal_degrade()
 {
-    char sv[256] = {'\0'};
-    int ret = RETURN_ERR, itemp;
-    ret = execute("omci -c 'mib me 263' | grep -w SD_threshold | awk '{print$3}' | cut -d '(' -f2 |cut -d ')' -f1", sv);
-    if(RETURN_OK != ret)
-    {
-        printf("\nError %s\n", __func__);
-    }
-    else
-    {
-        memset(retValue, 0, 256);
-        strlcpy(retValue, sv, strlen(sv) + 1);
-        return retValue;
-    }
-    return "-1";
+    int result;
+    result=execute_int("omci -c 'mib me 263' | grep -w SD_threshold | awk '{print$3}' | cut -d '(' -f2 |cut -d ')' -f1");
+    return result;
 }
 
 int gpon_get_frame_header_hec_errors()
