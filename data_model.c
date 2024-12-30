@@ -28,8 +28,25 @@ static const char ANU_TC_PM_PHY[] = "xpon_onu.x.ani.1.tc.pm.phy";
 static const char TC_PM_GEM[] = "xpon_onu.x.ani.1.tc.pm.gem";
 static const char TC_PM_PLOAM[] = "xpon_onu.x.ani.1.tc.pm.ploam";
 static const char TC_PM_OMCI[] = "xpon_onu.x.ani.1.tc.pm.omci";
+static const char TC_GEM[] = "xpon_onu.x.ani.1.tc.gem";
+static const char GEM_PORT_0[] = "xpon_onu.x.ani.1.tc.gem.port.0";
+static const char GEM_PORT0_PM[] = "xpon_onu.x.ani.1.tc.gem.port.0.pm";
 static const char GEM_PORT_1[] = "xpon_onu.x.ani.1.tc.gem.port.1";
-static const char GEM_PORT_PM[] = "xpon_onu.x.ani.1.tc.gem.port.1.pm";
+static const char GEM_PORT1_PM[] = "xpon_onu.x.ani.1.tc.gem.port.1.pm";
+static const char GEM_PORT_2[] = "xpon_onu.x.ani.1.tc.gem.port.2";
+static const char GEM_PORT2_PM[] = "xpon_onu.x.ani.1.tc.gem.port.2.pm";
+static const char GEM_PORT_3[] = "xpon_onu.x.ani.1.tc.gem.port.3";
+static const char GEM_PORT3_PM[] = "xpon_onu.x.ani.1.tc.gem.port.3.pm";
+static const char GEM_PORT_4[] = "xpon_onu.x.ani.1.tc.gem.port.4";
+static const char GEM_PORT4_PM[] = "xpon_onu.x.ani.1.tc.gem.port.4.pm";
+static const char GEM_PORT_5[] = "xpon_onu.x.ani.1.tc.gem.port.5";
+static const char GEM_PORT5_PM[] = "xpon_onu.x.ani.1.tc.gem.port.5.pm";
+static const char GEM_PORT_6[] = "xpon_onu.x.ani.1.tc.gem.port.6";
+static const char GEM_PORT6_PM[] = "xpon_onu.x.ani.1.tc.gem.port.6.pm";
+static const char GEM_PORT_7[] = "xpon_onu.x.ani.1.tc.gem.port.7";
+static const char GEM_PORT7_PM[] = "xpon_onu.x.ani.1.tc.gem.port.7.pm";
+static const char GEM_PORT_8[] = "xpon_onu.x.ani.1.tc.gem.port.8";
+static const char GEM_PORT8_PM[] = "xpon_onu.x.ani.1.tc.gem.port.8.pm";
 static const char PERF_THRESHOLDS[] = "xpon_onu.x.ani.1.tc.performance_thresholds";
 static const char ALARMS[] = "xpon_onu.x.ani.1.tc.alarms";
 static const char TRANSCEIVER_1[] = "xpon_onu.x.ani.1.transceiver.1";
@@ -61,8 +78,25 @@ typedef enum _obj_id {
     id_tc_pm_gem,
     id_tc_pm_ploam,
     id_tc_pm_omci,
+    id_tc_gem,
+    id_gem_port_0,
+    id_gem_port0_pm,
     id_gem_port_1,
-    id_gem_port_pm,
+    id_gem_port1_pm,
+    id_gem_port_2,
+    id_gem_port2_pm,
+    id_gem_port_3,
+    id_gem_port3_pm,
+    id_gem_port_4,
+    id_gem_port4_pm,
+    id_gem_port_5,
+    id_gem_port5_pm,
+    id_gem_port_6,
+    id_gem_port6_pm,
+    id_gem_port_7,
+    id_gem_port7_pm,
+    id_gem_port_8,
+    id_gem_port8_pm,
     id_perf_thresholds,
     id_alarms,
     id_transceiver_1,
@@ -185,14 +219,116 @@ static const object_info_t OBJECT_INFO[n_objects] = {
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
+        .id = id_tc_gem,
+        .name = TC_GEM,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_gem_port_0,
+        .name = GEM_PORT_0,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_gem_port0_pm,
+        .name = GEM_PORT0_PM,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
         .id = id_gem_port_1,
         .name = GEM_PORT_1,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port_pm,
-        .name = GEM_PORT_PM,
+        .id = id_gem_port1_pm,
+        .name = GEM_PORT1_PM,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+        {
+        .id = id_gem_port_2,
+        .name = GEM_PORT_2,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_gem_port2_pm,
+        .name = GEM_PORT2_PM,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+        {
+        .id = id_gem_port_3,
+        .name = GEM_PORT_3,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_gem_port3_pm,
+        .name = GEM_PORT3_PM,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+        {
+        .id = id_gem_port_4,
+        .name = GEM_PORT_4,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_gem_port4_pm,
+        .name = GEM_PORT4_PM,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+        {
+        .id = id_gem_port_5,
+        .name = GEM_PORT_5,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_gem_port5_pm,
+        .name = GEM_PORT5_PM,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+        {
+        .id = id_gem_port_6,
+        .name = GEM_PORT_6,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_gem_port6_pm,
+        .name = GEM_PORT6_PM,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+        {
+        .id = id_gem_port_7,
+        .name = GEM_PORT_7,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_gem_port7_pm,
+        .name = GEM_PORT7_PM,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+        {
+        .id = id_gem_port_8,
+        .name = GEM_PORT_8,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_gem_port8_pm,
+        .name = GEM_PORT8_PM,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
@@ -274,8 +410,12 @@ static void data_model_for_get_method(const char* name) {
     {
         SAH_TRACE_INFO("path='%s' => XPON_ONU", path);
         blobmsg_add_u8(&b, "enable", s_onu_enabled ? 1 : 0);
+        // blobmsg_add_u8(&b, "enable", 1);
         blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
         blobmsg_add_string(&b, "equipment_id", gpon_get_equipment_id());
+        blobmsg_add_u32(&b, "software_number_of_entries", gpon_get_software_number_of_entries());
+        blobmsg_add_u32(&b, "ethernet_uni_number_of_entries", gpon_get_eth_uni_number_of_entries());
+        blobmsg_add_u32(&b, "ani_number_of_entries", 1);
         if(str_equal(name, XPON_ONU_ONE, name_len)) 
         {
             SAH_TRACE_INFO("name='%s' => XPON_ONU_ONE", name);
@@ -292,9 +432,9 @@ static void data_model_for_get_method(const char* name) {
     {
         SAH_TRACE_INFO("path='%s' => SW_IMG_1", path);
         blobmsg_add_u32(&b, "id", 0);
-        blobmsg_add_u8(&b, "is_committed", 1);
-        blobmsg_add_u8(&b, "is_active", 1);
-        blobmsg_add_u8(&b, "is_valid", 1);
+        blobmsg_add_u8(&b, "is_committed", gpon_get_sw_img_is_committed(1));
+        blobmsg_add_u8(&b, "is_active", gpon_get_sw_img_is_active(1));
+        blobmsg_add_u8(&b, "is_valid", gpon_get_sw_img_is_valid(1));
         blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
     } 
     
@@ -302,31 +442,31 @@ static void data_model_for_get_method(const char* name) {
     {
         SAH_TRACE_INFO("path='%s' => SW_IMG_2", path);
         blobmsg_add_u32(&b, "id", 1);
-        blobmsg_add_u8(&b, "is_committed", 0);
-        blobmsg_add_u8(&b, "is_active", 0);
-        blobmsg_add_u8(&b, "is_valid", 1);
+        blobmsg_add_u8(&b, "is_committed", gpon_get_sw_img_is_committed(2));
+        blobmsg_add_u8(&b, "is_active", gpon_get_sw_img_is_active(2));
+        blobmsg_add_u8(&b, "is_valid", gpon_get_sw_img_is_valid(2));
         blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
     } 
     
     else if(str_equal(path, ETH_UNI_1, name_len))
     {
         SAH_TRACE_INFO("path='%s' => ETH_UNI_1", path);
-        blobmsg_add_u8(&b, "enable", 1);
-        blobmsg_add_string(&b, "name", "MyEthernetUNI");
+        blobmsg_add_u8(&b, "enable", gpon_get_xpon_eth_uni_enable());
+        blobmsg_add_string(&b, "name", gpon_get_eth_uni_name());
         blobmsg_add_string(&b, "alias", "alias");
-        blobmsg_add_string(&b, "status", "Up");
+        blobmsg_add_string(&b, "status", gpon_get_eth_uni_status());
         blobmsg_add_string(&b, "ani_list", "MyAni");
         blobmsg_add_string(&b, "last_change", "last change");
         blobmsg_add_string(&b, "lower_layers", "lower_layers");
-        blobmsg_add_string(&b, "interdomain_id", "(VEIP,1025)");
+        blobmsg_add_string(&b, "interdomain_id", gpon_get_eth_uni_interdomain_id());
         blobmsg_add_string(&b, "interdomain_name", "");
     } 
     
     else if (str_equal(path, ETH_UNI_STATS, name_len))
     {
         SAH_TRACE_INFO("path='%s' => ETH_UNI_STATS", path);
-        blobmsg_add_u64(&b, "bytes_sent", 0);
-        blobmsg_add_u64(&b, "bytes_received", 0);
+        blobmsg_add_u64(&b, "bytes_sent", gpon_get_eth_bytes_sent());
+        blobmsg_add_u64(&b, "bytes_received", gpon_get_eth_bytes_received());
         blobmsg_add_u64(&b, "packets_sent", gpon_get_eth_packets_sent());
         blobmsg_add_u64(&b, "packets_received", gpon_get_eth_packets_received());
         blobmsg_add_u64(&b, "errors_sent", gpon_get_eth_errors_sent());
@@ -341,16 +481,16 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_broadcast_packets_received());
         blobmsg_add_u64(&b, "unknown_proto_packets_received", 0);
     }
-    
+
     else if(str_equal(path, ANI_1, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => ANI_1", path);
         blobmsg_add_u8(&b, "enable", s_ani_one_enabled ? 1 : 0);
         blobmsg_add_string(&b, "name", "MyANI");
         blobmsg_add_string(&b, "alias", "alias");
-        blobmsg_add_string(&b, "last_change", gpon_get_accum_time());
+        blobmsg_add_u64(&b, "last_change", gpon_get_onu_ani_last_change());
         blobmsg_add_string(&b, "status", gpon_get_PM_status());
-        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
+        blobmsg_add_string(&b, "pon_mode", "XGS-PON");
         blobmsg_add_u8(&b, "transceiver_number_of_entries", 1);
     } 
     
@@ -361,7 +501,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u64(&b, "bytes_received", gpon_get_onu_ani_stats("ds_byte_in"));  
         blobmsg_add_u64(&b, "packets_sent", gpon_get_ani_stats_packets_sent());  
         blobmsg_add_u64(&b, "packets_received", gpon_get_ani_stats_packets_received());  
-        blobmsg_add_u64(&b, "errors_sent", gpon_get_ani_errors_sent());  
+        blobmsg_add_u64(&b, "errors_sent", gpon_get_ani_errors_sent());
         blobmsg_add_u64(&b, "errors_received", gpon_get_ani_errors_received()); 
         blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_onu_ani_stats("us_ucast"));  
         blobmsg_add_u64(&b, "unicast_packets_received", gpon_get_onu_ani_stats("ds_ucast"));  
@@ -381,7 +521,7 @@ static void data_model_for_get_method(const char* name) {
         snprintf(onu_state, 3, "O%u", s_onu_state);
         blobmsg_add_string(&b, "onu_state", gpon_get_pm_operationalstate());  
         blobmsg_add_string(&b, "vendor_id", gpon_get_ploam_vendorid());  
-        blobmsg_add_string(&b, "serial_number", gpon_get_ploam_serialnumber());  
+        blobmsg_add_string(&b, "serial_number", gpon_get_ploam_serialnumber()); 
         blobmsg_add_u32(&b, "onu_id", gpon_get_ploam_onuid());  
     }
 
@@ -398,6 +538,7 @@ static void data_model_for_get_method(const char* name) {
     }
     
     else if(str_equal(path, TC_PM_GEM, name_len)) {
+        SAH_TRACE_INFO("path='%s' => TC_PM_GEM", path);
         blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(1));  
         blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(1));  
         blobmsg_add_u64(&b, "frame_header_hec_errors", gpon_get_frame_header_hec_errors());  
@@ -405,31 +546,142 @@ static void data_model_for_get_method(const char* name) {
     }
     
     else if(str_equal(path, TC_PM_PLOAM, name_len)){
+        SAH_TRACE_INFO("path='%s' => TC_PM_PLOAM", path);
         blobmsg_add_u64(&b, "mic_errors", gpon_get_ploam_micerrors());  
-        blobmsg_add_string(&b, "downstream_message_count", gpon_get_ploam_rxmessagecount());  
+        blobmsg_add_u64(&b, "downstream_message_count", gpon_get_ploam_rxmesgcount());  
         blobmsg_add_u64(&b, "ranging_time", gpon_get_ranging_time());  
-        blobmsg_add_string(&b, "upstream_message_count", gpon_get_ploam_txmessagecount());  
+        blobmsg_add_u64(&b, "upstream_message_count", gpon_get_ploam_txmesgcount());  
     }
     
     else if(str_equal(path, TC_PM_OMCI, name_len)){
+        SAH_TRACE_INFO("path='%s' => TC_PM_OMCI", path);
         blobmsg_add_u64(&b, "baseline_messages_received", gpon_get_omci_baselinemessagecount());  
         blobmsg_add_u64(&b, "extended_messages_received", gpon_get_omci_extendedmessagecount());  
         blobmsg_add_u64(&b, "mic_errors", gpon_get_omci_micerrors());  
     }
+
+    else if(str_equal(path, TC_GEM, name_len)){
+        SAH_TRACE_INFO("path='%s' => TC_GEM", path);
+        blobmsg_add_u32(&b, "port_number_of_entries", gpon_get_port_number_of_entries());
+    }
+
+    else if(str_equal(path, GEM_PORT_0, name_len)) {
+        SAH_TRACE_INFO("path='%s' => GEM_PORT_0", path);
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(0));  
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(0));  
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(0));  
+    } 
+    
+    else if (str_equal(path, GEM_PORT1_PM, name_len))
+    {
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(0));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(0));  
+    }
     
     else if(str_equal(path, GEM_PORT_1, name_len)) {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_1", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id());  
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(1));  
         blobmsg_add_string(&b, "direction", gpon_get_gem_directions(1));  
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(1));  
     } 
     
-    else if (str_equal(path, GEM_PORT_PM, name_len)) 
+    else if (str_equal(path, GEM_PORT1_PM, name_len))
     {
         blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(1));  
         blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(1));  
     }
+
+    else if(str_equal(path, GEM_PORT_2, name_len)) {
+        SAH_TRACE_INFO("path='%s' => GEM_PORT_2", path);
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(2));  
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(2));  
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(2));  
+    } 
     
+    else if (str_equal(path, GEM_PORT2_PM, name_len)) 
+    {
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(2));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(2));  
+    }
+
+    else if(str_equal(path, GEM_PORT_3, name_len)) {
+        SAH_TRACE_INFO("path='%s' => GEM_PORT_3", path);
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(3));  
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(3));  
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(3));  
+    } 
+    
+    else if (str_equal(path, GEM_PORT3_PM, name_len)) 
+    {
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(3));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(3));  
+    }
+
+    else if(str_equal(path, GEM_PORT_4, name_len)) {
+        SAH_TRACE_INFO("path='%s' => GEM_PORT_4", path);
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(4));  
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(4));  
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(4));  
+    } 
+    
+    else if (str_equal(path, GEM_PORT4_PM, name_len)) 
+    {
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(4));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(4));  
+    }
+
+    else if(str_equal(path, GEM_PORT_5, name_len)) {
+        SAH_TRACE_INFO("path='%s' => GEM_PORT_5", path);
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(5));  
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(5));  
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(5));  
+    } 
+    
+    else if (str_equal(path, GEM_PORT5_PM, name_len)) 
+    {
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(5));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(5));  
+    }
+
+    else if(str_equal(path, GEM_PORT_6, name_len)) {
+        SAH_TRACE_INFO("path='%s' => GEM_PORT_6", path);
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(6));  
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(6));  
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(6));  
+    } 
+    
+    else if (str_equal(path, GEM_PORT6_PM, name_len)) 
+    {
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(6));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(6));  
+    }
+
+    else if(str_equal(path, GEM_PORT_7, name_len)) {
+        SAH_TRACE_INFO("path='%s' => GEM_PORT_7", path);
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(7));  
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(7));  
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(7));  
+    } 
+    
+    else if (str_equal(path, GEM_PORT7_PM, name_len)) 
+    {
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(7));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(7));  
+    }
+    
+    else if(str_equal(path, GEM_PORT_8, name_len)) {
+        SAH_TRACE_INFO("path='%s' => GEM_PORT_8", path);
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(8));
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(8));  
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(8));  
+    } 
+    
+    else if (str_equal(path, GEM_PORT8_PM, name_len)) 
+    {
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(8));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(8));  
+    }
+
     else if(str_equal(path, PERF_THRESHOLDS, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => PERF_THRESHOLDS", path);
@@ -469,15 +721,20 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_string(&b, "vendor_name", "Qualcomm");  
         blobmsg_add_string(&b, "vendor_part_number", "QCF8000");  
         blobmsg_add_string(&b, "vendor_revision", gpon_get_pm_modulefirmwareversion());  
-        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());  
+        blobmsg_add_string(&b, "pon_mode", "XGS-PON");
         blobmsg_add_string(&b, "connector", "SC"); 
-        blobmsg_add_string(&b, "nominal_bit_rate_downstream", gpon_get_nominal_bitrate());  
-        blobmsg_add_string(&b, "nominal_bit_rate_upstream", gpon_get_nominal_bitrate());  
-        blobmsg_add_string(&b, "rx_power", gpon_get_rxp_signal_level());  
-        blobmsg_add_string(&b, "tx_power", gpon_get_txp_signal_level());  
-        blobmsg_add_string(&b, "voltage", gpon_get_current_voltage());  
-        blobmsg_add_string(&b, "bias", gpon_get_current_bias());  
-        blobmsg_add_string(&b, "temperature",gpon_get_current_temperature());  
+        blobmsg_add_u64(&b, "nominal_bit_rate_downstream", gpon_get_nominalbitrate());
+        blobmsg_add_u64(&b, "nominal_bit_rate_upstream", gpon_get_nominalbitrate());
+        s_rx_power=gpon_get_rxp_signallevel();
+        blobmsg_add_u32(&b, "rx_power", s_rx_power);
+        s_tx_power=gpon_get_txp_signallevel();
+        blobmsg_add_u32(&b, "tx_power", s_tx_power);  
+        s_voltage=gpon_get_voltage();
+        blobmsg_add_u32(&b, "voltage", s_voltage); 
+        s_bias=gpon_get_bias();
+        blobmsg_add_u32(&b, "bias", s_bias);
+        s_temperature=gpon_get_temperature();
+        blobmsg_add_u32(&b, "temperature", s_temperature);
     } 
     
     else if(str_equal(path, TRANSCEIVER_2, name_len)) 
@@ -486,7 +743,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u32(&b, "id", 1);  
         blobmsg_add_u32(&b, "identifier", 25);  
         blobmsg_add_string(&b, "vendor_name", "Qualcomm");  
-        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());  
+        blobmsg_add_string(&b, "pon_mode", "XGS-PON");  
     } 
     
     else 
@@ -497,25 +754,39 @@ static void data_model_for_get_method(const char* name) {
 
 
 static void set_enable(const char* const obj_name, bool enable) {
+    printf("--------------- inside set_enable function -----------------\n");
     char path[128];
     snprintf(path, 128, "%s", obj_name);
     const int index_of_onu_nr = strlen("xpon_onu.");
     path[index_of_onu_nr] = 'x';
     const size_t path_len = strlen(obj_name);
 
-    if(str_equal(path, XPON_ONU, path_len)) {
-        if(s_onu_enabled != enable) {
+    if(str_equal(path, XPON_ONU, path_len))
+    {
+        if(s_onu_enabled != enable)
+        {
             SAH_TRACE_INFO("s_onu_enabled: %d -> %d", s_onu_enabled, enable);
             s_onu_enabled = enable;
+            blobmsg_add_u8(&b, "enable", s_onu_enabled);
+            gpon_set_xpon_onu_enable(enable);
         }
         blobmsg_add_u8(&b, "enable", s_onu_enabled);
-    } else if(str_equal(path, ANI_1, path_len)) {
-        if(s_ani_one_enabled != enable) {
+    } 
+
+    else if(str_equal(path, ANI_1, path_len)) 
+    {
+        if(s_ani_one_enabled != enable) 
+        {
             SAH_TRACE_INFO("s_ani_one_enabled: %d -> %d", s_ani_one_enabled, enable);
             s_ani_one_enabled = enable;
+            blobmsg_add_u8(&b, "enable", s_ani_one_enabled);
+            gpon_set_xpon_onu_ani_enable(enable);
         }
         blobmsg_add_u8(&b, "enable", s_ani_one_enabled);
-    } else {
+    }
+
+    else 
+    {
         SAH_TRACE_ERROR("Unknown object: '%s'", path);
     }
 }
