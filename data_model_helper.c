@@ -68,133 +68,11 @@ uint64_t execute_int(const char* cmd)
     return res;
 }
 
-char* gpon_get_veip_interdomainname(int index)
-{
-    char sv[256] = {'\0'}, buffer[256]= {'\0'};
-    int ret = RETURN_ERR;
-    char buf1[32]= {'\0'}, buf2[32]= {'\0'} ;
-    char buf3[32]= {'\0'}, buf4[32]= {'\0'} ;
-
-    ret = execute("omci -c 'mib me 329' | grep -w 'Interdomain_name:' | awk '{print $3}'", sv);
-    if(RETURN_OK != ret)
-    {
-        printf("\nError %s\n", __func__);
-        return "-1";
-    }
-    else
-    {
-	strlcat(buf1, gpon_get_veip_ethernetflow_egresstagged(index), sizeof(retValue));
-	strlcat(buf2, gpon_get_veip_ethernetflow_egress_qvlan_vid(index), sizeof(retValue));
-	strlcat(buf3, gpon_get_veip_ethernetflow_egress_qvlan_pcp(index), sizeof(retValue));
-	strlcat(buf4, gpon_get_veip_ethernetflow_egress_qvlan_dei(index), sizeof(retValue));
-	ret = strlen(sv);
-	if (ret < 2)
-	    snprintf(buffer, strlen(buf1)+strlen(buf2)+strlen(buf3)+strlen(buf4)+8,  "www#%s-%s-%s-%s",buf1, buf2, buf3, buf4);
-	else
-	    snprintf(buffer, strlen(buf1)+strlen(buf2)+strlen(buf3)+strlen(buf4)+strlen(sv)+5,"%s#%s-%s-%s-%s", sv, buf1, buf2, buf3, buf4);
-        memset(retValue, 0, 256);
-	    strlcpy(retValue, buffer, strlen(buffer) + 1);
-        return retValue;
-    }
-}
-
-char* gpon_get_veip_ethernetflow_egresstagged(int index)
-{
-    char sv[32] = {'\0'};
-    int ret = RETURN_ERR;
-    
-    char cmd[256];
-    snprintf (cmd, sizeof(cmd), "omci -c 'cf ethflow veip_egress' | sed -ne '/EthernetFlow.Egress/,$ p' | awk {'print $2'} |  awk 'NR==%d' | tr -d ',' | awk '{sum += $1} END {print sum}'", index+3);
-    ret = execute(cmd, sv);
-    if(RETURN_OK != ret)
-    {
-        printf("\nError %s\n", __func__);
-        return "-1";
-    }
-    else
-    {
-        if(strcmp(sv,"1") == 0)
-        {
-            strlcpy(retValue, "Single", strlen("Single")+1);
-        }   
-        else if(strcmp(sv,"2") == 0)
-        {
-            strlcpy(retValue, "Double", strlen("Double")+1);
-        }
-        else
-        {
-            strlcpy(retValue, "Single", strlen("Single")+1);
-        }
-	    return retValue;
-    }
-    return "-1";
-}
-
-char* gpon_get_veip_ethernetflow_egress_qvlan_vid(int index)
-{
-    char sv[32] = {'\0'};
-    int ret = RETURN_ERR;
-
-    char cmd[256];
-    snprintf (cmd, sizeof(cmd), "omci -c 'cf ethflow veip_egress' | sed -ne '/EthernetFlow.Egress/,$ p' | awk {'print $5'} |  awk 'NR==%d' | tr -d ',' | awk '{sum += $1} END {print sum}'", index+3);
-    ret = execute(cmd, sv);
-    if(RETURN_OK != ret)
-    {
-        printf("\nError %s\n", __func__);
-        return "-1";
-    }
-    else
-    {
-	strlcpy(retValue, sv, strlen(sv) + 1);
-        return retValue;
-    }
-}
-
-char* gpon_get_veip_ethernetflow_egress_qvlan_pcp(int index)
-{
-    char sv[32] = {'\0'};
-    int ret = RETURN_ERR;
-
-    char cmd[256];
-    snprintf (cmd, sizeof(cmd), "omci -c 'cf ethflow veip_egress' | sed -ne '/EthernetFlow.Egress/,$ p' | awk {'print $6'} |  awk 'NR==%d' | tr -d ',' | awk '{sum += $1} END {print sum}'", index+3);
-    ret = execute(cmd, sv);
-    if(RETURN_OK != ret)
-    {
-        printf("\nError %s\n", __func__);
-        return "-1";
-    }
-    else
-    {
-	strlcpy(retValue, sv, strlen(sv) + 1);
-        return retValue;
-    }
-}
-
-char* gpon_get_veip_ethernetflow_egress_qvlan_dei(int index)
-{
-    char sv[32] = {'\0'};
-    int ret = RETURN_ERR;
-
-    char cmd[256];
-    snprintf (cmd, sizeof(cmd), "omci -c 'cf ethflow veip_egress' | sed -ne '/EthernetFlow.Egress/,$ p' | awk {'print $7'} |  awk 'NR==%d' | tr -d ',' | awk '{sum += $1} END {print sum}'", index+3);
-    ret = execute(cmd, sv);
-    if(RETURN_OK != ret)
-    {
-        printf("\nError %s\n", __func__);
-        return "-1";
-    }
-    else
-    {
-	strlcpy(retValue, sv, strlen(sv) + 1);
-        return retValue;
-    }
-}
-
 int gpon_get_gem_transmittedframes(int index)
 {
     int result;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'tx frames'  -A65536 | awk '{print $4}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+2);
+    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'tx frames'  -A65536 | awk '{print $4}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+3);
     result = execute_int(cmd);
     return result;
 }
@@ -203,7 +81,7 @@ int gpon_get_gem_receivedframes(int index)
 {
     int result;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'rx frames'  -A65536 | awk '{print $9}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+2);
+    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'rx frames'  -A65536 | awk '{print $9}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+3);
     result = execute_int(cmd);
     return result;
 }
@@ -270,6 +148,49 @@ char* gpon_get_ploam_txmessagecount()
     }
 }
 
+
+uint64_t gpon_get_ploam_txmesgcount()
+{
+    uint64_t result=0;
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_bst_prof' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_assign_onuid' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_ranging_time' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_deact_onuid'  | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_dis_sn' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_assign_allocid' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_sleep_allow' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_adjust_tx_wl' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_sys_prof' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_protec_ctl' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_pwr_cons_inq' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_proprietary' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_mic_err' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_req_reg' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_key_ctl' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_cali_req' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_tuning_ctl' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_ch_prof' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_change_pwrl' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_reboot' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamd event' -A 11 | grep 'msg_unknown' | awk '{print$5}'");
+    return result;
+}
+
+uint64_t gpon_get_ploam_rxmesgcount()
+{
+    uint64_t result=0;
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_sn_onu' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_reg' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_ack' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_key_rpt' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_pwr_cons_rpt' | awk '{print$2}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_reg_zseq' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_ack_zseq' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_tuning_resp' | awk '{print$5}'");
+    result+=execute_int("cat /proc/trex/gpon/edr | grep -w 'ploamu event' -A 5 | grep 'msg_sleep_req' | awk '{print$5}'");
+    return result;
+}
+
 char* gpon_get_ploam_rxmessagecount()
 {
     char sv[32] = {'\0'};
@@ -312,7 +233,7 @@ char* gpon_get_gem_directions(int index)
     char sv[256] = {'\0'};
     int ret = RETURN_ERR;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "omci -c 'gpon gem' | grep Mcast -A65536 | awk '{print $10}' | awk 'NR==%d'", index+2);
+    snprintf (cmd, sizeof(cmd), "omci -c 'gpon gem' | grep Mcast -A65536 | awk '{print $10}' | awk 'NR==%d'", index+3);
     ret = execute(cmd, sv);
     if(RETURN_OK != ret)
     {
@@ -342,7 +263,7 @@ char* gpon_get_gem_traffctype(int index)
     int ret = RETURN_ERR;
     int res=RETURN_ERR;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "cat /proc/trex/gpon/xgem | grep 'encrypt' | grep 'intid=' | awk '{print$7}' | awk 'NR==%d' | cut -d '(' -f2 | cut -d ')' -f1", index);
+    snprintf (cmd, sizeof(cmd), "cat /proc/trex/gpon/xgem | grep 'encrypt' | grep 'intid=' | awk '{print$7}' | awk 'NR==%d' | cut -d '(' -f2 | cut -d ')' -f1", index+1);
     ret = execute(cmd, sv);
     if(RETURN_OK != ret)
     {
@@ -470,6 +391,13 @@ char* gpon_get_nominal_bitrate()
     return "-1";
 }
 
+uint64_t gpon_get_nominalbitrate()
+{
+    uint64_t result;
+    result=execute_int("cat /proc/trex/gpon/global | grep 'us_rate' | cut -d'(' -f2 | cut -d')' -f1 | tr -cd '0-9\n'");
+    return result;
+}
+
 // xpon_onu.{i} - equipment id
 char* gpon_get_equipment_id()
 {
@@ -527,6 +455,22 @@ char* gpon_get_rxp_signal_level()
     return "-1";
 }
 
+int gpon_get_rxp_signallevel()
+{
+    int result;
+    result=execute_int("omci -c 'info anig' | grep rx | awk '{print $2 $3 $4}' | cut -d '(' -f2 | cut -d')' -f1 | sed 's/dBm//'");
+    result=result*10;
+    return result;
+}
+
+int gpon_get_txp_signallevel()
+{
+    int result;
+    result=execute_int("omci -c 'info anig' | grep tx | awk '{print $2 $3 $4}' | cut -d '(' -f2 | cut -d')' -f1 | sed 's/dBm//'");
+    result=result*10;
+    return result;
+}
+
 // xpon_onu.{i}.ani.{i}.transceiver.{i} - tx_power
 char* gpon_get_txp_signal_level()
 {
@@ -563,6 +507,28 @@ char* gpon_get_current_voltage()
         return retValue;
     }
     return "-1";
+}
+
+int gpon_get_voltage()
+{
+    int result;
+    result=execute_int("omci -c 'info anig' | grep vcc | awk '{print $2 $3}' | tr -cd '0-9\n'");
+    return result;
+}
+
+int gpon_get_bias()
+{
+    int result;
+    result=execute_int("omci -c 'info anig' | grep bias | awk '{print $2 $3}' | tr -cd '0-9\n'");
+    return result;
+
+}
+
+int gpon_get_temperature()
+{
+    int result;
+    result=execute_int("omci -c 'info anig' | grep degree | awk '{print $2 $3}' | tr -d 'C'");
+    return result;
 }
 
 // xpon_onu.{i}.ani.{i}.transceiver.{i} - bias
@@ -624,25 +590,6 @@ char* gpon_get_pm_modulefirmwareversion()
     return "-1";
 }
 
-char* gpon_get_accum_time()
-{
-    // char sv[256] = {'\0'};
-    // int ret = RETURN_ERR, itemp;
-    // ret = execute("cat /proc/trex/gpon/pm ", sv);
-    // if(RETURN_OK != ret)
-    // {
-    //     printf("\nError %s\n", __func__);
-    // }
-    // else
-    // {
-    //     memset(retValue, 0, 256);
-    //     strlcpy(retValue, sv, strlen(sv) + 1);
-    //     return retValue;
-    // }
-    // return "-1";
-    return "accum_time";
-}
-
 // xpon_onu.{i}.ani.{i} - status
 char* gpon_get_PM_status()
 {
@@ -661,7 +608,7 @@ char* gpon_get_PM_status()
         else if(strcmp(sv,"O5") == 0)
 	   return "Up";
         else
-	   return "Not Present";
+	   return "NotPresent";
 
     }
     return "-1";
@@ -691,23 +638,17 @@ char* gpon_get_PM_ponmode()
 char*  gpon_get_pm_operationalstate()
 {
     char sv[256] = {'\0'};
-    int res = RETURN_ERR;
-    int ret = RETURN_ERR;
-
+    int ret = RETURN_ERR, itemp;
     ret = execute("cat /proc/trex/gpon/onu | grep -w state | cut -c 7-8", sv);
     if(RETURN_OK != ret)
     {
         printf("\nError %s\n", __func__);
-        //return "-1";
     }
     else
     {
-        printf("\n11:%s=%s", __func__, sv);
-        res=strcmp(sv,"O5");
-        if(res==0)
-           return "Active";
-        else
-           return "Inactive";
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
     }
     return "-1";
 }
@@ -1085,10 +1026,12 @@ int gpon_get_pm_alarm_sd()
     return result;
 }
 
-int gpon_get_gem_port_id()
+int gpon_get_gem_port_id(int index)
 {
     int result;
-    result=execute_int("omci -c 'gpon gem' | grep Gem -A65536 | awk '{print $1}' | awk 'NR==3' | cut -d '(' -f1");
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "omci -c 'gpon gem' | grep Gem -A65536 | awk '{print $1}' | awk 'NR==%d' | cut -d '(' -f1", index+3);
+    result=execute_int(cmd);
     return result;
 }
 
@@ -1158,5 +1101,204 @@ int gpon_get_xgem_key_errors()
 {
     int result;
     result=execute_int("omci -c 'gpon cnt global' | grep xgem_key_err= | awk '{print $2}' | cut -d '=' -f2");
+    return result;
+}
+
+int gpon_get_software_number_of_entries()
+{
+    int result;
+    result=execute_int("omci -c 'mib me 7' | grep -c meid");
+    return result;
+}
+
+int gpon_get_eth_uni_number_of_entries()
+{
+    int result;
+    result=execute_int("omci -c 'info conv_uni' | grep IF_NAME -A10 | grep -c eth");
+    return result;
+}
+
+int gpon_get_port_number_of_entries()
+{
+    int result;
+    result=execute_int("omci -c 'gpon gem' | grep -c 0x");
+    return result;
+}
+
+uint64_t gpon_get_eth_bytes_sent()
+{
+    uint64_t result1=-1, result2=-1;
+    result1=execute_int("fw_printenv | grep machid | cut -d'=' -f2");
+
+    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201)
+    {
+        result2=execute_int("ethtool -S eth0 | grep tx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+    }
+    else if(result1==8050003)
+    {
+        result2=execute_int("ethtool -S eth5 | grep tx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+    }
+    else if(result1==8050004)
+    {
+        result2=execute_int("ethtool -S eth4 | grep tx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+    }
+    return result2;
+}
+
+uint64_t gpon_get_eth_bytes_received()
+{
+    uint64_t result1=-1, result2=-1;
+    result1=execute_int("fw_printenv | grep machid | cut -d'=' -f2");
+
+    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201)
+    {
+        result2=execute_int("ethtool -S eth0 | grep rx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+    }
+    else if(result1==8050003)
+    {
+        result2=execute_int("ethtool -S eth5 | grep rx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+    }
+    else if(result1==8050004)
+    {
+        result2=execute_int("ethtool -S eth4 | grep rx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+    }
+    return result2;
+}
+
+int gpon_get_sw_img_is_committed(int index)
+{
+    int result;
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep Is_committed | sed -n '%dp' | cut -d'(' -f2 | cut -d')' -f1", index);
+    result=execute_int(cmd);
+    return result;
+}
+
+int gpon_get_sw_img_is_active(int index)
+{
+    int result;
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep Is_active | sed -n '%dp' | cut -d'(' -f2 | cut -d')' -f1", index);
+    result=execute_int(cmd);
+    return result;
+}
+
+int gpon_get_sw_img_is_valid(int index)
+{
+    int result;
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep Is_valid | sed -n '%dp' | cut -d'(' -f2 | cut -d')' -f1", index);
+    result=execute_int(cmd);
+    return result;
+}
+
+char* gpon_get_eth_uni_status()
+{
+    int result;
+    result=execute_int("omci -c 'mib me 11' | grep Pptp_Ethernet_UNI -A10 | grep Operational_state | cut -d'(' -f2 | tr -d ')'");
+    
+    if(result==0)
+    {
+        return "Up";
+    }
+    else if(result==1)
+    {
+        return "Down";
+    }
+    return "-1";
+}
+
+char* gpon_get_eth_uni_name()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR, itemp;
+    ret = execute("omci -c 'mib me 11' | grep Pptp_Ethernet_UNI -A2 | grep inst | cut -d',' -f2", sv);
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+    return "-1";
+}
+
+char* gpon_get_eth_uni_interdomain_id()
+{
+    int result;
+    result=execute_int("omci -c 'mib me 329' | grep meid | cut -d'(' -f2 | cut -d')' -f1");
+    char sv[256] = {'\0'};
+    snprintf(sv, sizeof(sv), "(VEIP,%d)", result);
+    memset(retValue, 0, 256);
+    strlcpy(retValue, sv, strlen(sv) + 1);
+    return retValue;
+}
+
+uint64_t gpon_get_onu_ani_last_change()
+{
+    uint64_t result;
+    result=execute_int("cat /proc/trex/gpon/pm | grep 'accum time' -A10 | awk '{print $6}' | awk '{sum += $1} END {print sum}'");
+    return result;
+}
+
+void gpon_set_xpon_onu_enable(int val)
+{
+    printf("----------- Inside gpon_set_xpon_onu_enable function ------------\n");
+    char* cmd;
+    if(val==0)
+    {
+        cmd="/etc/init.d/omci_done stop";
+    }
+    else
+    {
+        cmd="/etc/init.d/omci_done start";
+    }
+    FILE *fp = NULL;
+    char output[256] = {'\0'};
+    char *str = NULL,*pos=NULL;
+    fp = popen(cmd, "r");
+    if(NULL == fp)
+    {
+        printf("Failed to run command\n" );
+    }
+    pclose(fp);
+}
+
+void gpon_set_xpon_onu_ani_enable(int val)
+{
+    char* cmd;
+    if(val==0)
+    {
+        cmd="echo tx_disable output 1 > /proc/trex/io/pon ; echo disable_psync 1 > /proc/trex/gpon/mac";
+    }
+    else{
+        cmd="echo tx_disable output 0 > /proc/trex/io/pon ; echo disable_psync 1 > /proc/trex/gpon/mac";
+    }
+    FILE *fp = NULL;
+    char output[256] = {'\0'};
+    char *str = NULL,*pos=NULL;
+    fp = popen(cmd, "r");
+    if(NULL == fp)
+    {
+        printf("Failed to run command\n" );
+    }
+    pclose(fp);
+}
+
+
+int gpon_get_xpon_eth_uni_enable()
+{
+    int result;
+    result=execute_int("omci -c 'mib me 11' | grep Pptp_Ethernet_UNI -A10 | grep Administrative_state | cut -d'(' -f2 | tr -d ')'");
+    if(result==0){
+        return 1;
+    }
+    else if(result==1)
+    {
+        return 0;
+    }
     return result;
 }
