@@ -445,7 +445,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u8(&b, "is_committed", gpon_get_sw_img_is_committed(2));
         blobmsg_add_u8(&b, "is_active", gpon_get_sw_img_is_active(2));
         blobmsg_add_u8(&b, "is_valid", gpon_get_sw_img_is_valid(2));
-        blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
+        blobmsg_add_string(&b, "version"," ");
     } 
     
     else if(str_equal(path, ETH_UNI_1, name_len))
