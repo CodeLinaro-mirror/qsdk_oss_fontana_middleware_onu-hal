@@ -926,44 +926,18 @@ int gpon_get_pm_alarm_dact()
 {
     char sv[256] = {'\0'}, conustate[256] = {'\0'};
     int ret = RETURN_ERR,result=RETURN_ERR;
-    int msgonuid = RETURN_ERR;
-    ret = execute("cat /proc/trex/gpon/onu | grep -w state | cut -c 7-8", sv);
-    if(RETURN_OK != ret)
+    ret = execute("cat /proc/trex/gpon/alarm | grep -w DACT | awk '{ print $3 }'", sv);
+    if (result == 1)
     {
-        printf("\nError %s\n", __func__);
+        return 1;
     }
-    else
-    {
-        sscanf(sv, "%s", conustate);
-        memset(sv, 0, 256);
-        ret = execute("cat /proc/trex/gpon/edr | grep msg_deact_onuid -w | awk '{ print$5}'", sv);
-        if(RETURN_OK != ret)
-        {
-            printf("\nError %s\n", __func__);
-        }
-        else
-        {
-            sscanf(sv, "%d", &msgonuid);
-            // (strcmp(conustate, "O5") != 0)
-            if(msgonuid>0 && strcmp(conustate, "O5") != 0)
-            {
-                // Active
-                return 1;
-            }
-            else
-            {
-                // Inactive
-                return 0;
-            }
-        }
-    }
-    return -1;
+    return 0;
 }
 
 int gpon_get_pm_alarm_los()
 {
     uint64_t result;
-    result=execute_int("grep -w rx_los /proc/trex/io/pon | awk '{print $2}'");
+    result = execute_int("cat /proc/trex/gpon/alarm | grep -w LOS | awk '{ print $3 }'");
     if (result == 1)
     {
         return 1;
@@ -974,13 +948,9 @@ int gpon_get_pm_alarm_los()
 int gpon_get_pm_alarm_lof()
 {
     char sv[256] = {'\0'};
-    int ret = RETURN_ERR, itemp;
-    ret = execute("cat /proc/trex/gpon/onu | grep -w state | cut -c 7-8", sv);
-    if(RETURN_OK != ret)
-    {
-        printf("\nError %s\n", __func__);
-    }
-    if (sv == "O1")
+    int result = RETURN_ERR, itemp;
+    result = execute_int("cat /proc/trex/gpon/alarm | grep -w LOF | awk '{ print $3 }'");
+    if (result == 1)
     {
         return 1;
     }
@@ -1004,7 +974,7 @@ uint64_t gpon_get_pm_alarm_lcdg()
 uint64_t gpon_get_pm_alarm_rogue()
 {
     uint64_t result;
-    result=execute_int("grep -w tx_fault /proc/trex/io/pon | awk '{print $2}'");
+    result = execute_int("cat /proc/trex/gpon/alarm | grep -w ROGUE | awk '{ print $3 }'");
     if (result == 1)
     {
         return 1;
@@ -1122,7 +1092,7 @@ int gpon_get_port_number_of_entries()
 {
     int result;
     result=execute_int("omci -c 'gpon gem' | grep -c 0x");
-    return result;
+    return result-1;
 }
 
 uint64_t gpon_get_eth_bytes_sent()
@@ -1130,17 +1100,17 @@ uint64_t gpon_get_eth_bytes_sent()
     uint64_t result1=-1, result2=-1;
     result1=execute_int("fw_printenv | grep machid | cut -d'=' -f2");
 
-    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201)
+    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201 || result1==8071101)
     {
-        result2=execute_int("ethtool -S eth0 | grep tx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+        result2=execute_int("ethtool -S eth1 | grep tx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
     }
     else if(result1==8050003)
     {
-        result2=execute_int("ethtool -S eth5 | grep tx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+        result2=execute_int("ethtool -S eth1 | grep tx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
     }
     else if(result1==8050004)
     {
-        result2=execute_int("ethtool -S eth4 | grep tx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+        result2=execute_int("ethtool -S eth1 | grep tx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
     }
     return result2;
 }
@@ -1150,17 +1120,17 @@ uint64_t gpon_get_eth_bytes_received()
     uint64_t result1=-1, result2=-1;
     result1=execute_int("fw_printenv | grep machid | cut -d'=' -f2");
 
-    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201)
+    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201 || result1==8071101) 
     {
-        result2=execute_int("ethtool -S eth0 | grep rx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+        result2=execute_int("ethtool -S eth1 | grep rx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
     }
     else if(result1==8050003)
     {
-        result2=execute_int("ethtool -S eth5 | grep rx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+        result2=execute_int("ethtool -S eth1 | grep rx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
     }
     else if(result1==8050004)
     {
-        result2=execute_int("ethtool -S eth4 | grep rx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
+        result2=execute_int("ethtool -S eth1 | grep rx_bytes: | sed -n '2p' | cut -d':' -f2 | tr -d ' '");
     }
     return result2;
 }
