@@ -365,8 +365,8 @@ static struct blob_buf b;
 static struct ubus_context* s_ctx = NULL;
 static int s_onu_nr = 1;
 
-static bool s_onu_enabled = false;
-static bool s_ani_one_enabled = false;
+static bool s_onu_enabled = true;
+static bool s_ani_one_enabled = true;
 
 
 typedef struct _request {
@@ -572,7 +572,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(0));  
     } 
     
-    else if (str_equal(path, GEM_PORT1_PM, name_len))
+    else if (str_equal(path, GEM_PORT0_PM, name_len))
     {
         blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(0));  
         blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(0));  
