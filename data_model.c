@@ -532,7 +532,7 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u64(&b, "corrected_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_corrected"));  
         blobmsg_add_u64(&b, "uncorrectable_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_uncorrected"));  
         blobmsg_add_u64(&b, "total_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd"));  
-        blobmsg_add_u64(&b, "psbd_hec_error_count", gpon_get_onu_ani_tc_pm("xgem_hd_hec_err"));  
+        blobmsg_add_u64(&b, "psbd_hec_error_count", gpon_get_onu_ani_tc_pm("psbd_hec_err"));  
         blobmsg_add_u64(&b, "header_hec_error_count", gpon_get_onu_ani_tc_pm("fs_hec_err"));  
         blobmsg_add_u64(&b, "unknown_profile", gpon_get_onu_ani_tc_pm("unknown_bst_prof"));  
     }
