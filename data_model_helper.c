@@ -702,7 +702,7 @@ uint64_t gpon_get_onu_ani_stats(const char* keyword)
     uint64_t res;
     char *str = NULL,*pos=NULL;
     char cmd[256];
-    snprintf(cmd, sizeof(cmd), "cat /proc/trex/pmhd/l2dsrv | awk '{for(i=1;i<=NF;i++) if($i==\"%s\") print $(i+1)}'", keyword);
+    snprintf(cmd, sizeof(cmd), "awk '{for(i=1;i<=NF;i++) if($i==\"%s\") print $(i+1)}' /proc/trex/pmhd/l2dsrv", keyword);
     fp = popen(cmd, "r");
     if(NULL == fp)
     {
@@ -731,7 +731,7 @@ uint64_t gpon_get_ani_errors_sent()
 uint64_t gpon_get_ani_errors_received()
 {
     uint64_t result;
-    result = (gpon_get_onu_ani_stats("ds_drop_mem_ov") + gpon_get_onu_ani_stats("ds_drop_lkp_ov") + gpon_get_onu_ani_stats("ds_drop_treat") + gpon_get_onu_ani_stats("tx_pause"));
+    result = (gpon_get_onu_ani_stats("ds_drop_mem_ov-") + gpon_get_onu_ani_stats("ds_drop_lkp_ov-") + gpon_get_onu_ani_stats("ds_drop_treat") + gpon_get_onu_ani_stats("tx_pause"));
     return result;
 }
 
@@ -759,7 +759,7 @@ uint64_t gpon_get_ani_stats_discard_packets_sent()
 uint64_t gpon_get_ani_stats_discard_packets_received()
 {
     uint64_t result;
-    result = (gpon_get_onu_ani_stats("ds_drop_mem_ov") + gpon_get_onu_ani_stats("ds_drop_lkp_ov") + gpon_get_onu_ani_stats("ds_drop_treat"));
+    result = (gpon_get_onu_ani_stats("ds_drop_mem_ov-") + gpon_get_onu_ani_stats("ds_drop_lkp_ov-") + gpon_get_onu_ani_stats("ds_drop_treat"));
     return result;
 }
 
@@ -1210,7 +1210,7 @@ char* gpon_get_eth_uni_interdomain_id()
 uint64_t gpon_get_onu_ani_last_change()
 {
     uint64_t result;
-    result=execute_int("cat /proc/trex/gpon/pm | grep 'accum time' -A10 | awk '{print $6}' | awk '{sum += $1} END {print sum}'");
+    result=execute_int("cat /proc/trex/gpon/onu | grep 'state:' | sed -n 's/.* \([0-9.]*\)s ago/\1/p'");
     return result;
 }
 

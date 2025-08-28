@@ -453,11 +453,11 @@ static void data_model_for_get_method(const char* name) {
         SAH_TRACE_INFO("path='%s' => ETH_UNI_1", path);
         blobmsg_add_u8(&b, "enable", gpon_get_xpon_eth_uni_enable());
         blobmsg_add_string(&b, "name", gpon_get_eth_uni_name());
-        blobmsg_add_string(&b, "alias", "alias");
+        blobmsg_add_string(&b, "alias", "cpe-EthernetUNI-1");
         blobmsg_add_string(&b, "status", gpon_get_eth_uni_status());
         blobmsg_add_string(&b, "ani_list", "MyAni");
-        blobmsg_add_string(&b, "last_change", "last change");
-        blobmsg_add_string(&b, "lower_layers", "lower_layers");
+        blobmsg_add_string(&b, "last_change", "");
+        blobmsg_add_string(&b, "lower_layers", "");
         blobmsg_add_string(&b, "interdomain_id", gpon_get_eth_uni_interdomain_id());
         blobmsg_add_string(&b, "interdomain_name", "");
     } 
@@ -481,13 +481,13 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_broadcast_packets_received());
         blobmsg_add_u64(&b, "unknown_proto_packets_received", 0);
     }
-
+    
     else if(str_equal(path, ANI_1, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => ANI_1", path);
         blobmsg_add_u8(&b, "enable", s_ani_one_enabled ? 1 : 0);
         blobmsg_add_string(&b, "name", "MyANI");
-        blobmsg_add_string(&b, "alias", "alias");
+        blobmsg_add_string(&b, "alias", "cpe-ANI-1");
         blobmsg_add_u64(&b, "last_change", gpon_get_onu_ani_last_change());
         blobmsg_add_string(&b, "status", gpon_get_PM_status());
         blobmsg_add_string(&b, "pon_mode", "XGS-PON");
@@ -497,8 +497,8 @@ static void data_model_for_get_method(const char* name) {
     else if(str_equal(path, ANI_STATS, name_len))
     {
         SAH_TRACE_INFO("path='%s' => ANI_STATS", path);
-        blobmsg_add_u64(&b, "bytes_sent", gpon_get_onu_ani_stats("us_byte_out"));
-        blobmsg_add_u64(&b, "bytes_received", gpon_get_onu_ani_stats("ds_byte_in"));  
+        blobmsg_add_u64(&b, "bytes_sent", gpon_get_onu_ani_stats("us_byte_out-"));
+        blobmsg_add_u64(&b, "bytes_received", gpon_get_onu_ani_stats("ds_byte_in-"));  
         blobmsg_add_u64(&b, "packets_sent", gpon_get_ani_stats_packets_sent());  
         blobmsg_add_u64(&b, "packets_received", gpon_get_ani_stats_packets_received());  
         blobmsg_add_u64(&b, "errors_sent", gpon_get_ani_errors_sent());
