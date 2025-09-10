@@ -68,6 +68,24 @@ uint64_t execute_int(const char* cmd)
     return res;
 }
 
+int gpon_get_gem_framessent(int start_index, int end_index)
+{
+    int result;
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'tx frames'  -A65536 | awk 'NR > %d && NR <= %d {sum += $4} END {print sum}'", start_index+2,end_index+2);
+    result = execute_int(cmd);
+    return result;
+}
+
+int gpon_get_gem_framesreceived(int start_index, int end_index)
+{
+    int result;
+    char cmd[256];
+    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'rx frames'  -A65536 | awk 'NR > %d && NR <= %d {sum += $4} END {print sum}'", start_index+2,end_index+2);
+    result = execute_int(cmd);
+    return result;
+}
+
 int gpon_get_gem_transmittedframes(int index)
 {
     int result;
@@ -81,7 +99,7 @@ int gpon_get_gem_receivedframes(int index)
 {
     int result;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'rx frames'  -A65536 | awk '{print $9}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+3);
+    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'rx frames'  -A65536 | awk '{print $4}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+3);
     result = execute_int(cmd);
     return result;
 }

@@ -539,8 +539,9 @@ static void data_model_for_get_method(const char* name) {
     
     else if(str_equal(path, TC_PM_GEM, name_len)) {
         SAH_TRACE_INFO("path='%s' => TC_PM_GEM", path);
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(1));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(1));  
+	// default port + 8 Gem ports, so 9 ports in total
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_framessent(0,9));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_framesreceived(0,9));  
         blobmsg_add_u64(&b, "frame_header_hec_errors", gpon_get_frame_header_hec_errors());  
         blobmsg_add_u64(&b, "key_errors", gpon_get_xgem_key_errors());  
     }
