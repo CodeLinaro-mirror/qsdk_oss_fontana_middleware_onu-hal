@@ -1102,7 +1102,7 @@ int gpon_get_software_number_of_entries()
 int gpon_get_eth_uni_number_of_entries()
 {
     int result;
-    result=execute_int("omci -c 'info conv_uni' | grep IF_NAME -A10 | grep -c eth");
+    result=execute_int("omci -c 'info conv_uni' | grep IF_NAME -A10 | grep LAN | grep -c eth");
     return result;
 }
 
@@ -1289,4 +1289,427 @@ int gpon_get_xpon_eth_uni_enable()
         return 0;
     }
     return result;
+}
+
+// ethernet_uni helper functions for dynamic support
+int gpon_get_xpon_eth_uni_enable_by_index(int index)
+{
+    int result;
+    char cmd[256];
+    // OMCI ME 11 instances start from 0x101 (257) for first ethernet UNI
+    // index is 0-based, so add it to 0x101
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' -A15 | grep Administrative_state | cut -d'(' -f2 | tr -d ')'", 0x101 + index, 257 + index);
+    result = execute_int(cmd);
+
+    if(result == 0) {
+        return 1;
+    }
+    else if(result == 1) {
+        return 0;
+    }
+    return result;
+}
+
+char* gpon_get_eth_uni_name_by_index(int index)
+{
+    int inst_id;
+    char cmd[256];
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | grep 'inst' | cut -d',' -f2 | awk '{print $2}'", 0x101 + index, 257 + index);
+    inst_id = execute_int(cmd);
+
+    if(inst_id >= 0) {
+        snprintf(cmd, sizeof(cmd), "omci -c 'info conv_uni' | awk '/^[[:space:]]*%d[[:space:]]+/ {print $4}'", inst_id);
+        ret = execute(cmd, sv);
+
+        if(RETURN_OK == ret && strlen(sv) > 0) {
+            memset(retValue, 0, 256);
+            strlcpy(retValue, sv, sizeof(retValue));
+            return retValue;
+        }
+    }
+
+    //  return a default ethernet interface name
+    memset(retValue, 0, 256);
+    snprintf(retValue, sizeof(retValue), "eth%d", index);
+    return retValue;
+
+}
+
+char* gpon_get_eth_uni_status_by_index(int index)
+{
+    int result;
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' -A15 | grep Operational_state | cut -d'(' -f2 | tr -d ')'", 0x101 + index, 257 + index);
+    result = execute_int(cmd);
+
+    if(result == 0) {
+        return "Up";
+    }
+    else if(result == 1) {
+        return "Down";
+    }
+    return "-1";
+
+}
+
+char* gpon_get_eth_uni_interdomain_id_by_index(int index)
+{
+    int result;
+    char cmd[256];
+    char sv[256] = {'\0'};
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | cut -d'(' -f2 | cut -d')' -f1", 0x101 + index, 257 + index);
+    result = execute_int(cmd);
+
+    if(result > 0) {
+        snprintf(sv, sizeof(sv), "(PPTPEthernetUNI,%d)", result);
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+
+    return "-1";
+}
+
+uint64_t gpon_get_eth_bytes_sent_by_index(int index)
+{
+    uint64_t result1=-1, result2=-1;
+    char cmd[256];
+    char interface_name[64] = {'\0'};
+    int ret = RETURN_ERR;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'info conv_uni' | grep IF_NAME -A10 | grep 'LAN' | awk 'NR==%d {print $3}'", index + 1);
+    ret = execute(cmd, interface_name);
+
+    if(RETURN_OK != ret || strlen(interface_name) == 0) {
+        return -1;
+    }
+
+    // Get machine ID to determine the ethtool command format
+    result1=execute_int("fw_printenv | grep machid | cut -d'=' -f2");
+
+    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201 || result1==8071101)
+    {
+        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep tx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
+        result2=execute_int(cmd);
+    }
+    else if(result1==8050003)
+    {
+        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep tx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
+        result2=execute_int(cmd);
+    }
+    else if(result1==8050004)
+    {
+        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep tx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
+        result2=execute_int(cmd);
+    }
+    return result2;
+}
+
+uint64_t gpon_get_eth_bytes_received_by_index(int index)
+{
+    uint64_t result1=-1, result2=-1;
+    char cmd[256];
+    char interface_name[64] = {'\0'};
+    int ret = RETURN_ERR;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'info conv_uni' | grep IF_NAME -A10 | grep 'LAN' | awk 'NR==%d {print $3}'", index + 1);
+    ret = execute(cmd, interface_name);
+
+    if(RETURN_OK != ret || strlen(interface_name) == 0) {
+        return -1;
+    }
+
+    result1=execute_int("fw_printenv | grep machid | cut -d'=' -f2");
+
+    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201 || result1==8071101)
+    {
+        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep rx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
+        result2=execute_int(cmd);
+    }
+    else if(result1==8050003)
+    {
+        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep rx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
+        result2=execute_int(cmd);
+    }
+    else if(result1==8050004)
+    {
+        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep rx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
+        result2=execute_int(cmd);
+    }
+    return result2;
+}
+
+uint64_t gpon_get_eth_packets_sent_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt' | grep '%s' | awk '{print $3}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+}
+
+uint64_t gpon_get_eth_packets_received_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt' | grep '%s' | awk '{print $2}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_eth_errors_sent_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt' | grep '%s' | awk '{print $7}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_eth_errors_received_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt' | grep '%s' | awk '{print $6}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_unicast_packets_sent_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($1 == \"%s\") print $3}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_unicast_packets_received_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($1 == \"%s\") print $3}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_discard_packets_sent_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($1 == \"%s\") print $6}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_discard_packets_received_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($1 == \"%s\") print $6}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_multicast_packets_sent_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($1 == \"%s\") print $4}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_multicast_packets_received_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($1 == \"%s\") print $4}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_broadcast_packets_sent_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($1 == \"%s\") print $5}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+uint64_t gpon_get_broadcast_packets_received_by_index(int index)
+{
+    char cmd[256];
+    char devname[64] = {'\0'};
+    int ret = RETURN_ERR;
+    uint64_t result = 0;
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'mib me 11' | grep 'meid: 0x%x(%d)' | awk '{print $6}'", 0x101 + index, 257 + index);
+    ret = execute(cmd, devname);
+
+    if(RETURN_OK != ret || strlen(devname) == 0) {
+        return -1;
+    }
+
+    snprintf(cmd, sizeof(cmd), "omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($1 == \"%s\") print $5}'", devname);
+    result = execute_int(cmd);
+
+    return result;
+
+}
+
+char* gpon_get_eth_uni_ani_list_by_index(int index)
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR;
+
+    ret = execute("cat /proc/omciibc | head -n 1 | cut -d'-' -f1", sv);
+
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
 }

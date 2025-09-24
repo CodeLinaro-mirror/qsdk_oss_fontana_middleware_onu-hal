@@ -19,8 +19,10 @@
 static const char XPON_ONU[] = "xpon_onu.x";
 static const char SW_IMG_1[] = "xpon_onu.x.software_image.1";
 static const char SW_IMG_2[] = "xpon_onu.x.software_image.2";
-static const char ETH_UNI_1[] = "xpon_onu.x.ethernet_uni.1";
-static const char ETH_UNI_STATS[] = "xpon_onu.x.ethernet_uni.1.stats";
+// Dynamic ethernet UNI definitions - will be allocated at runtime
+static char** eth_uni_names = NULL;
+static char** eth_uni_stats_names = NULL;
+static int max_eth_uni_count = 0;
 static const char ANI_1[] = "xpon_onu.x.ani.1";
 static const char ANI_STATS[] = "xpon_onu.x.ani.1.stats";
 static const char ONU_ACTIVATION[] = "xpon_onu.x.ani.1.tc.onu_activation";
@@ -69,8 +71,6 @@ typedef enum _obj_id {
     id_xpon_onu       = 0,
     id_sw_img_1,
     id_sw_img_2,
-    id_eth_uni_1,
-    id_eth_uni_stats,
     id_ani_1,
     id_ani_stats,
     id_onu_activation,
@@ -101,8 +101,19 @@ typedef enum _obj_id {
     id_alarms,
     id_transceiver_1,
     id_transceiver_2,
-    n_objects
+    n_static_objects  
 } obj_id_t;
+
+// Dynamic ethernet UNI objects will be allocated separately
+static object_wrapper_t** s_eth_uni_objects = NULL;
+static object_wrapper_t** s_eth_uni_stats_objects = NULL;
+
+// Forward declarations for helper functions
+static int extract_uni_index_from_name(const char* name);
+static int is_ethernet_uni_object(const char* name);
+static int is_ethernet_uni_stats_object(const char* name);
+static object_wrapper_t* create_eth_uni_object_wrapper(const char* path, int is_stats);
+static int dm_init_ethernet_uni_objects(int onu_nr);
 
 typedef struct _object_info {
     obj_id_t id;
@@ -145,7 +156,7 @@ static struct ubus_method METHODS_TRANSCEIVER[] = {
     { .name = METHOD_GET_PARAMS, .handler = common_method_handler, .policy = GET_PARAMS_POLICY, .n_policy = 1 }
 };
 
-static const object_info_t OBJECT_INFO[n_objects] = {
+static const object_info_t OBJECT_INFO[n_static_objects] = {
     {
         .id = id_xpon_onu,
         .name = XPON_ONU,
@@ -161,18 +172,6 @@ static const object_info_t OBJECT_INFO[n_objects] = {
     {
         .id = id_sw_img_2,
         .name = SW_IMG_2,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-    {
-        .id = id_eth_uni_1,
-        .name = ETH_UNI_1,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-    {
-        .id = id_eth_uni_stats,
-        .name = ETH_UNI_STATS,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
@@ -377,7 +376,7 @@ typedef struct _request {
     char* param_name;
 } request_t;
 
-static object_wrapper_t* s_objects[n_objects];
+static object_wrapper_t* s_objects[n_static_objects];
 
 
 static void request_delete(request_t* req) {
@@ -448,38 +447,47 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_string(&b, "version"," ");
     } 
     
-    else if(str_equal(path, ETH_UNI_1, name_len))
-    {
-        SAH_TRACE_INFO("path='%s' => ETH_UNI_1", path);
-        blobmsg_add_u8(&b, "enable", gpon_get_xpon_eth_uni_enable());
-        blobmsg_add_string(&b, "name", gpon_get_eth_uni_name());
-        blobmsg_add_string(&b, "alias", "cpe-EthernetUNI-1");
-        blobmsg_add_string(&b, "status", gpon_get_eth_uni_status());
-        blobmsg_add_string(&b, "ani_list", "MyAni");
-        blobmsg_add_string(&b, "last_change", "");
-        blobmsg_add_string(&b, "lower_layers", "");
-        blobmsg_add_string(&b, "interdomain_id", gpon_get_eth_uni_interdomain_id());
-        blobmsg_add_string(&b, "interdomain_name", "");
-    } 
-    
-    else if (str_equal(path, ETH_UNI_STATS, name_len))
-    {
-        SAH_TRACE_INFO("path='%s' => ETH_UNI_STATS", path);
-        blobmsg_add_u64(&b, "bytes_sent", gpon_get_eth_bytes_sent());
-        blobmsg_add_u64(&b, "bytes_received", gpon_get_eth_bytes_received());
-        blobmsg_add_u64(&b, "packets_sent", gpon_get_eth_packets_sent());
-        blobmsg_add_u64(&b, "packets_received", gpon_get_eth_packets_received());
-        blobmsg_add_u64(&b, "errors_sent", gpon_get_eth_errors_sent());
-        blobmsg_add_u64(&b, "errors_received", gpon_get_eth_errors_received());
-        blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_unicast_packets_sent());
-        blobmsg_add_u64(&b, "unicast_packets_received", gpon_get_unicast_packets_received());
-        blobmsg_add_u64(&b, "discard_packets_sent", gpon_get_discard_packets_sent());
-        blobmsg_add_u64(&b, "discard_packets_received", gpon_get_discard_packets_received());
-        blobmsg_add_u64(&b, "multicast_packets_sent", gpon_get_multicast_packets_sent());
-        blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_multicast_packets_received());
-        blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_broadcast_packets_sent());
-        blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_broadcast_packets_received());
-        blobmsg_add_u64(&b, "unknown_proto_packets_received", 0);
+    // Handle dynamic ethernet UNI objects
+    else if (is_ethernet_uni_object(name)) {
+        int uni_index = extract_uni_index_from_name(name);
+        if (uni_index > 0 && uni_index <= max_eth_uni_count) {
+            if (is_ethernet_uni_stats_object(name)) {
+                // Handle ethernet UNI stats
+                SAH_TRACE_INFO("path='%s' => ETH_UNI_%d_STATS", path, uni_index);
+                blobmsg_add_u64(&b, "bytes_sent", gpon_get_eth_bytes_sent_by_index(uni_index - 1) );
+                blobmsg_add_u64(&b, "bytes_received", gpon_get_eth_bytes_received_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "packets_sent", gpon_get_eth_packets_sent_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "packets_received", gpon_get_eth_packets_received_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "errors_sent", gpon_get_eth_errors_sent_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "errors_received", gpon_get_eth_errors_received_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_unicast_packets_sent_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "unicast_packets_received", gpon_get_unicast_packets_received_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "discard_packets_sent", gpon_get_discard_packets_sent_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "discard_packets_received", gpon_get_discard_packets_received_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "multicast_packets_sent", gpon_get_multicast_packets_sent_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_multicast_packets_received_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_broadcast_packets_sent_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_broadcast_packets_received_by_index(uni_index - 1));
+                blobmsg_add_u64(&b, "unknown_proto_packets_received", 0);
+            } else {
+                // Handle ethernet UNI object
+                SAH_TRACE_INFO("path='%s' => ETH_UNI_%d", path, uni_index);
+                char alias[64];
+                snprintf(alias, sizeof(alias), "cpe-EthernetUNI-%d", uni_index);
+                 
+                blobmsg_add_u8(&b, "enable", gpon_get_xpon_eth_uni_enable_by_index(uni_index - 1));
+                blobmsg_add_string(&b, "name",  gpon_get_eth_uni_name_by_index(uni_index - 1));
+                blobmsg_add_string(&b, "alias", alias);
+                blobmsg_add_string(&b, "status",  gpon_get_eth_uni_status_by_index(uni_index - 1));
+                blobmsg_add_string(&b, "ani_list",  gpon_get_eth_uni_ani_list_by_index(uni_index - 1));
+                blobmsg_add_string(&b, "last_change", "");
+                blobmsg_add_string(&b, "lower_layers", "");
+                blobmsg_add_string(&b, "interdomain_id",  gpon_get_eth_uni_interdomain_id_by_index(uni_index - 1));
+                blobmsg_add_string(&b, "interdomain_name", " ");
+            }
+        } else {
+            SAH_TRACE_ERROR("Invalid ethernet UNI index: %d", uni_index);
+        }
     }
     
     else if(str_equal(path, ANI_1, name_len)) 
@@ -946,8 +954,8 @@ exit:
 static int register_object(obj_id_t id) {
     int rc = 1;
 
-    if(id >= n_objects) {
-        SAH_TRACE_ERROR("id=%d >= n_objects=%d", id, n_objects);
+    if(id >= n_static_objects) {
+        SAH_TRACE_ERROR("id=%d >= n_static_objects=%d", id, n_static_objects);
         goto exit;
     }
 
@@ -975,8 +983,8 @@ exit:
 }
 
 static void unregister_object(obj_id_t id) {
-    if(id >= n_objects) {
-        SAH_TRACE_ERROR("id=%d >= n_objects=%d", id, n_objects);
+    if(id >= n_static_objects) {
+        SAH_TRACE_ERROR("id=%d >= n_static_objects=%d", id, n_static_objects);
         return;
     }
     if(s_objects[id] == NULL) {
@@ -993,6 +1001,141 @@ static void unregister_object(obj_id_t id) {
     s_objects[id] = NULL;
 }
 
+// Helper function to extract UNI index from object name
+static int extract_uni_index_from_name(const char* name) {
+    // Expected format: "xpon_onu.1.ethernet_uni.N" or "xpon_onu.1.ethernet_uni.N.stats"
+    const char* uni_pos = strstr(name, "ethernet_uni.");
+    if (!uni_pos) {
+        return -1;
+    }
+    
+    uni_pos += strlen("ethernet_uni.");
+    int index = 0;
+    if (sscanf(uni_pos, "%d", &index) == 1) {
+        return index;
+    }
+    
+    return -1;
+}
+
+// Helper function to check if object name is ethernet UNI
+static int is_ethernet_uni_object(const char* name) {
+    return strstr(name, "ethernet_uni.") != NULL ? 1 : 0;
+}
+
+// Helper function to check if object name is ethernet UNI stats
+static int is_ethernet_uni_stats_object(const char* name) {
+    return (strstr(name, "ethernet_uni.") != NULL && strstr(name, ".stats") != NULL) ? 1 : 0;
+}
+
+// Create dynamic ethernet UNI object wrapper
+static object_wrapper_t* create_eth_uni_object_wrapper(const char* path, int is_stats) {
+    object_wrapper_t* obj = (object_wrapper_t*) calloc(1, sizeof(object_wrapper_t));
+    when_null_trace(obj, exit, ERROR, "Failed to allocate mem");
+
+    obj->ubus_obj.type = (struct ubus_object_type*) calloc(1, sizeof(struct ubus_object_type));
+    if(NULL == obj->ubus_obj.type) {
+        SAH_TRACE_ERROR("Failed to allocate mem for ubus_object_type");
+        free(obj);
+        return NULL;
+    }
+
+    obj->name = strdup(path);
+
+    obj->ubus_obj.name = obj->name;
+    obj->ubus_obj.methods = METHODS_GET_ONLY;
+    obj->ubus_obj.n_methods = ARRAY_SIZE(METHODS_GET_ONLY);
+
+    obj->ubus_obj.type->name = obj->name;
+    obj->ubus_obj.type->methods = METHODS_GET_ONLY;
+    obj->ubus_obj.type->n_methods = ARRAY_SIZE(METHODS_GET_ONLY);
+
+exit:
+    return obj;
+}
+
+// Initialize dynamic ethernet UNI objects
+static int dm_init_ethernet_uni_objects(int onu_nr) {
+    int eth_uni_count = gpon_get_eth_uni_number_of_entries();
+    
+    if (eth_uni_count <= 0) {
+        SAH_TRACE_INFO("No ethernet UNI entries to register");
+        return 0;
+    }
+    
+    SAH_TRACE_INFO("Initializing %d ethernet UNI objects", eth_uni_count);
+    
+    // Clean up any existing allocations
+    if (s_eth_uni_objects || s_eth_uni_stats_objects || eth_uni_names || eth_uni_stats_names) {
+        SAH_TRACE_INFO("Cleaning up existing ethernet UNI objects");
+    }
+    
+    max_eth_uni_count = eth_uni_count;
+    
+    // Allocate arrays for object pointers
+    s_eth_uni_objects = (object_wrapper_t**) calloc(eth_uni_count, sizeof(object_wrapper_t*));
+    s_eth_uni_stats_objects = (object_wrapper_t**) calloc(eth_uni_count, sizeof(object_wrapper_t*));
+    eth_uni_names = (char**) calloc(eth_uni_count, sizeof(char*));
+    eth_uni_stats_names = (char**) calloc(eth_uni_count, sizeof(char*));
+    
+    if (!s_eth_uni_objects || !s_eth_uni_stats_objects || !eth_uni_names || !eth_uni_stats_names) {
+        SAH_TRACE_ERROR("Failed to allocate memory for ethernet UNI objects");
+        return 1;
+    }
+    
+    const int index = strlen("xpon_onu."); /* index of 'x' char */
+    
+    // Create and register ethernet UNI objects
+    for (int i = 0; i < eth_uni_count; i++) {
+        char uni_path[128];
+        char stats_path[128];
+        
+        // Create ethernet UNI object name: "xpon_onu.1.ethernet_uni.N"
+        snprintf(uni_path, sizeof(uni_path), "xpon_onu.x.ethernet_uni.%d", i + 1);
+        uni_path[index] = DIGITS[onu_nr];
+        
+        // Create ethernet UNI stats object name: "xpon_onu.1.ethernet_uni.N.stats"
+        snprintf(stats_path, sizeof(stats_path), "xpon_onu.x.ethernet_uni.%d.stats", i + 1);
+        stats_path[index] = DIGITS[onu_nr];
+        
+        // Store names for later reference
+        eth_uni_names[i] = strdup(uni_path);
+        eth_uni_stats_names[i] = strdup(stats_path);
+        
+        // Create and register ethernet UNI object
+        s_eth_uni_objects[i] = create_eth_uni_object_wrapper(uni_path, 0);
+        if (!s_eth_uni_objects[i]) {
+            SAH_TRACE_ERROR("Failed to create ethernet UNI object %d", i + 1);
+            return 1;
+        }
+        
+        if (ubus_add_object(s_ctx, &s_eth_uni_objects[i]->ubus_obj) != UBUS_STATUS_OK) {
+            SAH_TRACE_ERROR("Failed to add ethernet UNI object '%s' to ubus", uni_path);
+            delete_object_wrapper(s_eth_uni_objects[i]);
+            s_eth_uni_objects[i] = NULL;
+            return 1;
+        }
+        
+        // Create and register ethernet UNI stats object
+        s_eth_uni_stats_objects[i] = create_eth_uni_object_wrapper(stats_path, 1);
+        if (!s_eth_uni_stats_objects[i]) {
+            SAH_TRACE_ERROR("Failed to create ethernet UNI stats object %d", i + 1);
+            return 1;
+        }
+        
+        if (ubus_add_object(s_ctx, &s_eth_uni_stats_objects[i]->ubus_obj) != UBUS_STATUS_OK) {
+            SAH_TRACE_ERROR("Failed to add ethernet UNI stats object '%s' to ubus", stats_path);
+            delete_object_wrapper(s_eth_uni_stats_objects[i]);
+            s_eth_uni_stats_objects[i] = NULL;
+            return 1;
+        }
+        
+        SAH_TRACE_INFO("Registered ethernet UNI objects: %s and %s", uni_path, stats_path);
+    }
+    
+    return 0;
+}
+
 static int dm_advertise_onu(int onu_nr) {
     int rc = 1;
 
@@ -1004,10 +1147,17 @@ static int dm_advertise_onu(int onu_nr) {
 
     size_t i;
 
+    // Register static objects (excluding ethernet UNI which are now dynamic)
     for(i = 0; i < id_transceiver_2; ++i) {
         if(register_object(i) != 0) {
             goto exit;
         }
+    }
+    
+    // Initialize dynamic ethernet UNI objects
+    if (dm_init_ethernet_uni_objects(onu_nr) != 0) {
+        SAH_TRACE_ERROR("Failed to initialize ethernet UNI objects");
+        goto exit;
     }
 
     rc = 0;
@@ -1054,9 +1204,61 @@ void dm_change_onu_activation_onu_state(void) {
 void dm_cleanup(void) {
     int i;
 
-    for(i = 0; i < n_objects; ++i) {
+    // Clean up static objects
+    for(i = 0; i < n_static_objects; ++i) {
         if(s_objects[i]) {
             unregister_object(i);
         }
     }
+    
+    // Clean up dynamic ethernet UNI objects
+    if(s_eth_uni_objects) {
+        for(i = 0; i < max_eth_uni_count; ++i) {
+            if(s_eth_uni_objects[i]) {
+                if(ubus_remove_object(s_ctx, &s_eth_uni_objects[i]->ubus_obj)) {
+                    SAH_TRACE_ERROR("Failed to remove ethernet UNI object from ubus");
+                }
+                delete_object_wrapper(s_eth_uni_objects[i]);
+            }
+        }
+        free(s_eth_uni_objects);
+        s_eth_uni_objects = NULL;
+    }
+    
+    // Clean up dynamic ethernet UNI stats objects
+    if(s_eth_uni_stats_objects) {
+        for(i = 0; i < max_eth_uni_count; ++i) {
+            if(s_eth_uni_stats_objects[i]) {
+                if(ubus_remove_object(s_ctx, &s_eth_uni_stats_objects[i]->ubus_obj)) {
+                    SAH_TRACE_ERROR("Failed to remove ethernet UNI stats object from ubus");
+                }
+                delete_object_wrapper(s_eth_uni_stats_objects[i]);
+            }
+        }
+        free(s_eth_uni_stats_objects);
+        s_eth_uni_stats_objects = NULL;
+    }
+    
+    // Clean up dynamic name arrays
+    if(eth_uni_names) {
+        for(i = 0; i < max_eth_uni_count; ++i) {
+            if(eth_uni_names[i]) {
+                free(eth_uni_names[i]);
+            }
+        }
+        free(eth_uni_names);
+        eth_uni_names = NULL;
+    }
+    
+    if(eth_uni_stats_names) {
+        for(i = 0; i < max_eth_uni_count; ++i) {
+            if(eth_uni_stats_names[i]) {
+                free(eth_uni_stats_names[i]);
+            }
+        }
+        free(eth_uni_stats_names);
+        eth_uni_stats_names = NULL;
+    }
+    
+    max_eth_uni_count = 0;
 }

@@ -109,4 +109,25 @@ int gpon_get_voltage();
 int gpon_get_bias();
 int gpon_get_temperature();
 
+// New indexed ethernet_uni helper functions for dynamic support
+int gpon_get_xpon_eth_uni_enable_by_index(int index);
+char* gpon_get_eth_uni_name_by_index(int index);
+char* gpon_get_eth_uni_status_by_index(int index);
+char* gpon_get_eth_uni_interdomain_id_by_index(int index);
+uint64_t gpon_get_eth_bytes_sent_by_index(int index);
+uint64_t gpon_get_eth_bytes_received_by_index(int index);
+uint64_t gpon_get_eth_packets_sent_by_index(int index);
+uint64_t gpon_get_eth_packets_received_by_index(int index);
+uint64_t gpon_get_eth_errors_sent_by_index(int index);
+uint64_t gpon_get_eth_errors_received_by_index(int index);
+uint64_t gpon_get_unicast_packets_sent_by_index(int index);
+uint64_t gpon_get_unicast_packets_received_by_index(int index);
+uint64_t gpon_get_discard_packets_sent_by_index(int index);
+uint64_t gpon_get_discard_packets_received_by_index(int index);
+uint64_t gpon_get_multicast_packets_sent_by_index(int index);
+uint64_t gpon_get_multicast_packets_received_by_index(int index);
+uint64_t gpon_get_broadcast_packets_sent_by_index(int index);
+uint64_t gpon_get_broadcast_packets_received_by_index(int index);
+char* gpon_get_eth_uni_ani_list_by_index(int index);
+
 #endif
