@@ -68,36 +68,36 @@ uint64_t execute_int(const char* cmd)
     return res;
 }
 
-int gpon_get_gem_framessent(int start_index, int end_index)
+uint64_t gpon_get_gem_framessent(int start_index, int end_index)
 {
-    int result;
+     uint64_t result;
     char cmd[256];
     snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'tx frames'  -A65536 | awk 'NR > %d && NR <= %d {sum += $4} END {print sum}'", start_index+2,end_index+2);
     result = execute_int(cmd);
     return result;
 }
 
-int gpon_get_gem_framesreceived(int start_index, int end_index)
+uint64_t gpon_get_gem_framesreceived(int start_index, int end_index)
 {
-    int result;
+    uint64_t result;
     char cmd[256];
     snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'rx frames'  -A65536 | awk 'NR > %d && NR <= %d {sum += $4} END {print sum}'", start_index+2,end_index+2);
     result = execute_int(cmd);
     return result;
 }
 
-int gpon_get_gem_transmittedframes(int index)
+uint64_t gpon_get_gem_transmittedframes(int index)
 {
-    int result;
+    uint64_t result;
     char cmd[256];
     snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'tx frames'  -A65536 | awk '{print $4}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+3);
     result = execute_int(cmd);
     return result;
 }
 
-int gpon_get_gem_receivedframes(int index)
+uint64_t gpon_get_gem_receivedframes(int index)
 {
-    int result;
+    uint64_t result;
     char cmd[256];
     snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'rx frames'  -A65536 | awk '{print $4}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+3);
     result = execute_int(cmd);
@@ -306,87 +306,87 @@ char* gpon_get_gem_traffctype(int index)
     return "-1";
 }
 
-uint64_t gpon_get_unicast_packets_sent()  //ifIn UcastPkts
+uint64_t gpon_get_unicast_packets_sent()  //ifOut UcastPkts
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($2 ~ /^[0-9]+$/) sum += $3} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/^ *ifOut/,/^QCOM/ {if ($1 == \"uni0\") print $3}'");
     return result;
 }
 
-uint64_t gpon_get_unicast_packets_received()  //ifOut UcastPkts
+uint64_t gpon_get_unicast_packets_received()  //ifIn UcastPkts
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $3} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt pkt' | awk '/^ *ifIn/,/^ *ifOut/ {if ($1 == \"uni0\") print $3}'");
     return result;
 }
 
-uint64_t gpon_get_discard_packets_sent()  //ifIn Discard
+uint64_t gpon_get_discard_packets_sent()  //ifOut Discard
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($2 ~ /^[0-9]+$/) sum += $6} END {print sum}'");
+    result = execute_int("omci -c 'switch pkt pkt' | awk '/^ *ifOut/,/^QCOM/ {if ($1 == \"uni0\") print $6}'");
     return result;
 }
 
-uint64_t gpon_get_discard_packets_received()  //ifOut Discard
+uint64_t gpon_get_discard_packets_received()  //ifIn Discard
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $6} END {print sum}'");
+   result = execute_int("omci -c 'switch pkt pkt' | awk '/^ *ifIn/,/^ *ifOut/ {if ($1 == \"uni0\") print $6}'");
     return result;
 }
 
-uint64_t gpon_get_multicast_packets_sent()  //ifIn McastPkts
+uint64_t gpon_get_multicast_packets_sent()  //ifOut McastPkts
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($2 ~ /^[0-9]+$/) sum += $4} END {print sum}'");
+    result = execute_int("omci -c 'switch pkt pkt' | awk '/^ *ifOut/,/^QCOM/ {if ($1 == \"uni0\") print $4}'");
     return result;
 }
 
-uint64_t gpon_get_multicast_packets_received()  //ifOut McastPkts
+uint64_t gpon_get_multicast_packets_received()  //ifIn McastPkts
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $4} END {print sum}'");
+    result = execute_int("omci -c 'switch pkt pkt' | awk '/^ *ifIn/,/^ *ifOut/ {if ($1 == \"uni0\") print $4}'");
     return result;
 }
 
-uint64_t gpon_get_broadcast_packets_sent() //ifIn BcastPkts
+uint64_t gpon_get_broadcast_packets_sent() //ifOut BcastPkts
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifIn/,/ifOut/ {if ($2 ~ /^[0-9]+$/) sum += $5} END {print sum}'");
+    result = execute_int("omci -c 'switch pkt pkt' | awk '/^ *ifOut/,/^QCOM/ {if ($1 == \"uni0\") print $5}'");
     return result;
 }
 
-uint64_t gpon_get_broadcast_packets_received()  //ifOut BcastPkts
+uint64_t gpon_get_broadcast_packets_received()  //ifIn BcastPkts
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt pkt' | awk '/ifOut/,0 {if ($2 ~ /^[0-9]+$/) sum += $5} END {print sum}'");
+    result = execute_int("omci -c 'switch pkt pkt' | awk '/^ *ifIn/,/^ *ifOut/ {if ($1 == \"uni0\") print $5}'");
     return result;
 }
 
 uint64_t gpon_get_eth_packets_sent()
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt' | awk '{sum += $3} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt' | grep '^  uni0' | awk '{print $3}'");
     return result;
 }
 
 uint64_t gpon_get_eth_packets_received()
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt' | awk '{sum += $2} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt' | grep '^  uni0' | awk '{print $2}'");
     return result;
 }
 
 uint64_t gpon_get_eth_errors_sent()
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt' | awk '{sum += $7} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt' | grep '^  uni0' | awk '{print $7}'");
     return result;
 }
 
 uint64_t gpon_get_eth_errors_received()
 {
     uint64_t result;
-    result=execute_int("omci -c 'switch pkt' | awk '{sum += $6} END {print sum}'");
+    result=execute_int("omci -c 'switch pkt' | grep '^  uni0' | awk '{print $6}'");
     return result;
 }
 
