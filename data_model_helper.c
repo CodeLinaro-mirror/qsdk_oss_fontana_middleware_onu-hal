@@ -1157,7 +1157,8 @@ int gpon_get_sw_img_is_committed(int index)
 {
     int result;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep Is_committed | sed -n '%dp' | cut -d'(' -f2 | cut -d')' -f1", index);
+    // index 0 corresponds to meid 0x0(0), index 1 corresponds to meid 0x1(1)
+    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep -A3 'meid: 0x%x(%d)' | grep Is_committed | cut -d'(' -f2 | cut -d')' -f1", index, index);
     result=execute_int(cmd);
     return result;
 }
@@ -1166,7 +1167,7 @@ int gpon_get_sw_img_is_active(int index)
 {
     int result;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep Is_active | sed -n '%dp' | cut -d'(' -f2 | cut -d')' -f1", index);
+    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep -A3 'meid: 0x%x(%d)' | grep Is_active | cut -d'(' -f2 | cut -d')' -f1", index, index);
     result=execute_int(cmd);
     return result;
 }
@@ -1175,9 +1176,31 @@ int gpon_get_sw_img_is_valid(int index)
 {
     int result;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep Is_valid | sed -n '%dp' | cut -d'(' -f2 | cut -d')' -f1", index);
+    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep -A4 'meid: 0x%x(%d)' | grep Is_valid | cut -d'(' -f2 | cut -d')' -f1", index, index);
     result=execute_int(cmd);
     return result;
+}
+
+char* gpon_get_sw_img_version(int index)
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR;
+    char cmd[256];
+    
+    snprintf (cmd, sizeof(cmd), "omci -c 'mib me 7' | grep -A3 'meid: 0x%x(%d)' | grep Version | awk '{print $3}'", index, index);
+    ret = execute(cmd, sv);
+    
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
 }
 
 char* gpon_get_eth_uni_status()

@@ -431,21 +431,21 @@ static void data_model_for_get_method(const char* name) {
     {
         SAH_TRACE_INFO("path='%s' => SW_IMG_1", path);
         blobmsg_add_u32(&b, "id", 0);
-        blobmsg_add_u8(&b, "is_committed", gpon_get_sw_img_is_committed(1));
-        blobmsg_add_u8(&b, "is_active", gpon_get_sw_img_is_active(1));
-        blobmsg_add_u8(&b, "is_valid", gpon_get_sw_img_is_valid(1));
-        blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
+        blobmsg_add_u8(&b, "is_committed", gpon_get_sw_img_is_committed(0));
+        blobmsg_add_u8(&b, "is_active", gpon_get_sw_img_is_active(0));
+        blobmsg_add_u8(&b, "is_valid", gpon_get_sw_img_is_valid(0));
+        blobmsg_add_string(&b, "version", gpon_get_sw_img_version(0));
     } 
     
     else if(str_equal(path, SW_IMG_2, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => SW_IMG_2", path);
         blobmsg_add_u32(&b, "id", 1);
-        blobmsg_add_u8(&b, "is_committed", gpon_get_sw_img_is_committed(2));
-        blobmsg_add_u8(&b, "is_active", gpon_get_sw_img_is_active(2));
-        blobmsg_add_u8(&b, "is_valid", gpon_get_sw_img_is_valid(2));
-        blobmsg_add_string(&b, "version"," ");
-    } 
+        blobmsg_add_u8(&b, "is_committed", gpon_get_sw_img_is_committed(1));
+        blobmsg_add_u8(&b, "is_active", gpon_get_sw_img_is_active(1));
+        blobmsg_add_u8(&b, "is_valid", gpon_get_sw_img_is_valid(1));
+        blobmsg_add_string(&b, "version", gpon_get_sw_img_version(1));
+    }
     
     // Handle dynamic ethernet UNI objects
     else if (is_ethernet_uni_object(name)) {

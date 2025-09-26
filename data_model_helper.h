@@ -94,6 +94,7 @@ uint64_t gpon_get_eth_bytes_received();
 int gpon_get_sw_img_is_committed(int index);
 int gpon_get_sw_img_is_active(int index);
 int gpon_get_sw_img_is_valid(int index);
+char* gpon_get_sw_img_version(int index);
 char* gpon_get_eth_uni_status();
 char* gpon_get_eth_uni_name();
 char* gpon_get_eth_uni_interdomain_id();
