@@ -31,24 +31,22 @@ static const char TC_PM_GEM[] = "xpon_onu.x.ani.1.tc.pm.gem";
 static const char TC_PM_PLOAM[] = "xpon_onu.x.ani.1.tc.pm.ploam";
 static const char TC_PM_OMCI[] = "xpon_onu.x.ani.1.tc.pm.omci";
 static const char TC_GEM[] = "xpon_onu.x.ani.1.tc.gem";
-static const char GEM_PORT_0[] = "xpon_onu.x.ani.1.tc.gem.port.0";
-static const char GEM_PORT0_PM[] = "xpon_onu.x.ani.1.tc.gem.port.0.pm";
 static const char GEM_PORT_1[] = "xpon_onu.x.ani.1.tc.gem.port.1";
-static const char GEM_PORT1_PM[] = "xpon_onu.x.ani.1.tc.gem.port.1.pm";
 static const char GEM_PORT_2[] = "xpon_onu.x.ani.1.tc.gem.port.2";
-static const char GEM_PORT2_PM[] = "xpon_onu.x.ani.1.tc.gem.port.2.pm";
 static const char GEM_PORT_3[] = "xpon_onu.x.ani.1.tc.gem.port.3";
-static const char GEM_PORT3_PM[] = "xpon_onu.x.ani.1.tc.gem.port.3.pm";
 static const char GEM_PORT_4[] = "xpon_onu.x.ani.1.tc.gem.port.4";
-static const char GEM_PORT4_PM[] = "xpon_onu.x.ani.1.tc.gem.port.4.pm";
 static const char GEM_PORT_5[] = "xpon_onu.x.ani.1.tc.gem.port.5";
-static const char GEM_PORT5_PM[] = "xpon_onu.x.ani.1.tc.gem.port.5.pm";
 static const char GEM_PORT_6[] = "xpon_onu.x.ani.1.tc.gem.port.6";
-static const char GEM_PORT6_PM[] = "xpon_onu.x.ani.1.tc.gem.port.6.pm";
 static const char GEM_PORT_7[] = "xpon_onu.x.ani.1.tc.gem.port.7";
-static const char GEM_PORT7_PM[] = "xpon_onu.x.ani.1.tc.gem.port.7.pm";
 static const char GEM_PORT_8[] = "xpon_onu.x.ani.1.tc.gem.port.8";
-static const char GEM_PORT8_PM[] = "xpon_onu.x.ani.1.tc.gem.port.8.pm";
+static const char PM_GEM_PORT_1[] = "xpon_onu.x.ani.1.tc.gem.port.1.pm";
+static const char PM_GEM_PORT_2[] = "xpon_onu.x.ani.1.tc.gem.port.2.pm";
+static const char PM_GEM_PORT_3[] = "xpon_onu.x.ani.1.tc.gem.port.3.pm";
+static const char PM_GEM_PORT_4[] = "xpon_onu.x.ani.1.tc.gem.port.4.pm";
+static const char PM_GEM_PORT_5[] = "xpon_onu.x.ani.1.tc.gem.port.5.pm";
+static const char PM_GEM_PORT_6[] = "xpon_onu.x.ani.1.tc.gem.port.6.pm";
+static const char PM_GEM_PORT_7[] = "xpon_onu.x.ani.1.tc.gem.port.7.pm";
+static const char PM_GEM_PORT_8[] = "xpon_onu.x.ani.1.tc.gem.port.8.pm";
 static const char PERF_THRESHOLDS[] = "xpon_onu.x.ani.1.tc.performance_thresholds";
 static const char ALARMS[] = "xpon_onu.x.ani.1.tc.alarms";
 static const char TRANSCEIVER_1[] = "xpon_onu.x.ani.1.transceiver.1";
@@ -79,24 +77,22 @@ typedef enum _obj_id {
     id_tc_pm_ploam,
     id_tc_pm_omci,
     id_tc_gem,
-    id_gem_port_0,
-    id_gem_port0_pm,
     id_gem_port_1,
-    id_gem_port1_pm,
     id_gem_port_2,
-    id_gem_port2_pm,
     id_gem_port_3,
-    id_gem_port3_pm,
     id_gem_port_4,
-    id_gem_port4_pm,
     id_gem_port_5,
-    id_gem_port5_pm,
     id_gem_port_6,
-    id_gem_port6_pm,
     id_gem_port_7,
-    id_gem_port7_pm,
     id_gem_port_8,
-    id_gem_port8_pm,
+    id_pm_gem_port_1,
+    id_pm_gem_port_2,
+    id_pm_gem_port_3,
+    id_pm_gem_port_4,
+    id_pm_gem_port_5,
+    id_pm_gem_port_6,
+    id_pm_gem_port_7,
+    id_pm_gem_port_8,
     id_perf_thresholds,
     id_alarms,
     id_transceiver_1,
@@ -224,110 +220,98 @@ static const object_info_t OBJECT_INFO[n_static_objects] = {
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port_0,
-        .name = GEM_PORT_0,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-    {
-        .id = id_gem_port0_pm,
-        .name = GEM_PORT0_PM,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-    {
         .id = id_gem_port_1,
         .name = GEM_PORT_1,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port1_pm,
-        .name = GEM_PORT1_PM,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-        {
         .id = id_gem_port_2,
         .name = GEM_PORT_2,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port2_pm,
-        .name = GEM_PORT2_PM,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-        {
         .id = id_gem_port_3,
         .name = GEM_PORT_3,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port3_pm,
-        .name = GEM_PORT3_PM,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-        {
         .id = id_gem_port_4,
         .name = GEM_PORT_4,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port4_pm,
-        .name = GEM_PORT4_PM,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-        {
         .id = id_gem_port_5,
         .name = GEM_PORT_5,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port5_pm,
-        .name = GEM_PORT5_PM,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-        {
         .id = id_gem_port_6,
         .name = GEM_PORT_6,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port6_pm,
-        .name = GEM_PORT6_PM,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-        {
         .id = id_gem_port_7,
         .name = GEM_PORT_7,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port7_pm,
-        .name = GEM_PORT7_PM,
-        .methods = METHODS_GET_ONLY,
-        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
-    },
-        {
         .id = id_gem_port_8,
         .name = GEM_PORT_8,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
     {
-        .id = id_gem_port8_pm,
-        .name = GEM_PORT8_PM,
+        .id = id_pm_gem_port_1,
+        .name = PM_GEM_PORT_1,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_pm_gem_port_2,
+        .name = PM_GEM_PORT_2,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_pm_gem_port_3,
+        .name = PM_GEM_PORT_3,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_pm_gem_port_4,
+        .name = PM_GEM_PORT_4,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_pm_gem_port_5,
+        .name = PM_GEM_PORT_5,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_pm_gem_port_6,
+        .name = PM_GEM_PORT_6,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_pm_gem_port_7,
+        .name = PM_GEM_PORT_7,
+        .methods = METHODS_GET_ONLY,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
+    },
+    {
+        .id = id_pm_gem_port_8,
+        .name = PM_GEM_PORT_8,
         .methods = METHODS_GET_ONLY,
         .n_methods = ARRAY_SIZE(METHODS_GET_ONLY)
     },
@@ -409,7 +393,6 @@ static void data_model_for_get_method(const char* name) {
     {
         SAH_TRACE_INFO("path='%s' => XPON_ONU", path);
         blobmsg_add_u8(&b, "enable", s_onu_enabled ? 1 : 0);
-        // blobmsg_add_u8(&b, "enable", 1);
         blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
         blobmsg_add_string(&b, "equipment_id", gpon_get_equipment_id());
         blobmsg_add_u32(&b, "software_number_of_entries", gpon_get_software_number_of_entries());
@@ -574,121 +557,117 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_u32(&b, "port_number_of_entries", gpon_get_port_number_of_entries());
     }
 
-    else if(str_equal(path, GEM_PORT_0, name_len)) {
-        SAH_TRACE_INFO("path='%s' => GEM_PORT_0", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(0));  
-        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(0));  
-        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(0));  
-    } 
-    
-    else if (str_equal(path, GEM_PORT0_PM, name_len))
+    else if(str_equal(path, GEM_PORT_1, name_len))
     {
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(0));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(0));  
-    }
-    
-    else if(str_equal(path, GEM_PORT_1, name_len)) {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_1", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(1));  
-        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(1));  
-        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(1));  
-    } 
-    
-    else if (str_equal(path, GEM_PORT1_PM, name_len))
-    {
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(1));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(1));  
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(1));
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(1));
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(1));
     }
-
-    else if(str_equal(path, GEM_PORT_2, name_len)) {
+    else if(str_equal(path, GEM_PORT_2, name_len))
+    {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_2", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(2));  
-        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(2));  
-        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(2));  
-    } 
-    
-    else if (str_equal(path, GEM_PORT2_PM, name_len)) 
-    {
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(2));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(2));  
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(2));
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(2));
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(2));
     }
-
-    else if(str_equal(path, GEM_PORT_3, name_len)) {
+    else if(str_equal(path, GEM_PORT_3, name_len))
+    {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_3", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(3));  
-        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(3));  
-        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(3));  
-    } 
-    
-    else if (str_equal(path, GEM_PORT3_PM, name_len)) 
-    {
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(3));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(3));  
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(3));
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(3));
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(3));
     }
-
-    else if(str_equal(path, GEM_PORT_4, name_len)) {
+    else if(str_equal(path, GEM_PORT_4, name_len))
+    {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_4", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(4));  
-        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(4));  
-        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(4));  
-    } 
-    
-    else if (str_equal(path, GEM_PORT4_PM, name_len)) 
-    {
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(4));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(4));  
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(4));
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(4));
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(4));
     }
-
-    else if(str_equal(path, GEM_PORT_5, name_len)) {
+    else if(str_equal(path, GEM_PORT_5, name_len))
+    {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_5", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(5));  
-        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(5));  
-        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(5));  
-    } 
-    
-    else if (str_equal(path, GEM_PORT5_PM, name_len)) 
-    {
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(5));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(5));  
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(5));
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(5));
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(5));
     }
-
-    else if(str_equal(path, GEM_PORT_6, name_len)) {
+    else if(str_equal(path, GEM_PORT_6, name_len))
+    {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_6", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(6));  
-        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(6));  
-        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(6));  
-    } 
-    
-    else if (str_equal(path, GEM_PORT6_PM, name_len)) 
-    {
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(6));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(6));  
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(6));
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(6));
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(6));
     }
-
-    else if(str_equal(path, GEM_PORT_7, name_len)) {
+    else if(str_equal(path, GEM_PORT_7, name_len))
+    {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_7", path);
-        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(7));  
-        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(7));  
-        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(7));  
-    } 
-    
-    else if (str_equal(path, GEM_PORT7_PM, name_len)) 
-    {
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(7));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(7));  
+        blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(7));
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(7));
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(7));
     }
-    
-    else if(str_equal(path, GEM_PORT_8, name_len)) {
+    else if(str_equal(path, GEM_PORT_8, name_len))
+    {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_8", path);
         blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(8));
-        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(8));  
-        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(8));  
-    } 
-    
-    else if (str_equal(path, GEM_PORT8_PM, name_len)) 
+        blobmsg_add_string(&b, "direction", gpon_get_gem_directions(8));
+        blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(8));
+    }
+
+    else if(str_equal(path, PM_GEM_PORT_1, name_len)) 
     {
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(8));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(8));  
+       SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_1", path);
+       blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(1));
+       blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(1));
+    } 
+
+    else if(str_equal(path, PM_GEM_PORT_2, name_len)) 
+    {
+       SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_2", path);
+       blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(2));
+       blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(2));
+    }
+
+    else if(str_equal(path, PM_GEM_PORT_3, name_len)) 
+    {
+       SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_3", path);
+       blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(3));
+       blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(3));
+    }
+
+    else if(str_equal(path, PM_GEM_PORT_4, name_len)) 
+    {
+       SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_4", path);
+       blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(4));
+       blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(4));
+    }
+
+    else if(str_equal(path, PM_GEM_PORT_5, name_len)) 
+    {
+       SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_5", path);
+       blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(5));
+       blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(5));
+    }
+
+    else if(str_equal(path, PM_GEM_PORT_6, name_len)) 
+    {
+       SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_6", path);
+       blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(6));
+       blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(6));
+    }
+
+    else if(str_equal(path, PM_GEM_PORT_7, name_len)) 
+    {
+       SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_7", path);
+       blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(7));
+       blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(7));
+    }
+
+    else if(str_equal(path, PM_GEM_PORT_8, name_len)) 
+    {
+       SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_8", path);
+       blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(8));
+       blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(8));
     }
 
     else if(str_equal(path, PERF_THRESHOLDS, name_len)) 
@@ -831,7 +810,9 @@ static void data_model_for_get_params_method(const char* const obj_name,
         } else {
             SAH_TRACE_ERROR("object: %s: unknown param_name: %s", obj_name, param_name);
         }
-    } else {
+    } 
+
+    else {
         SAH_TRACE_ERROR("Unknown object: %s", obj_name);
     }
 }

@@ -262,13 +262,14 @@ char* gpon_get_gem_directions(int index)
         if(strcmp(sv,"0")==0)
         {
             memset(retValue, 0, 256);
-            strlcpy(retValue, "Bidirectional", strlen("Bidirectional")+1);
+            strlcpy(retValue, "bidirectional", strlen("bidirectional")+1);
             return retValue;
         }  
         else
         {
             memset(retValue, 0, 256);
-            strlcpy(retValue, "Unidirectional", strlen("Unidirectional")+1);
+	    // Unidirectional
+            strlcpy(retValue, "ANI-to-UNI", strlen("ANI-to-UNI")+1);
             return retValue;
         }
     }
@@ -293,13 +294,15 @@ char* gpon_get_gem_traffctype(int index)
         if(res==0)
         {
             memset(retValue, 0, 256);
-            strlcpy(retValue, "Unidirectional", strlen("Unidirectional")+1);
+	    // Unidirectional
+            strlcpy(retValue, "multicast", strlen("multicast")+1);
             return retValue;
         }
         else
         {
             memset(retValue, 0, 256);
-            strlcpy(retValue, "Bidirectional", strlen("Bidirectional")+1);
+	    // Bidirectional
+            strlcpy(retValue, "unicast", strlen("unicast")+1);
             return retValue;
         }
     }
