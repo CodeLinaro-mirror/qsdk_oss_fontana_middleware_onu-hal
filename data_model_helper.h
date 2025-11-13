@@ -109,6 +109,9 @@ int gpon_get_txp_signallevel();
 int gpon_get_voltage();
 int gpon_get_bias();
 int gpon_get_temperature();
+char* gpon_get_PM_vendorname();
+char* gpon_get_PM_vendorpartnumber();
+char* gpon_get_PM_connector();
 
 // New indexed ethernet_uni helper functions for dynamic support
 int gpon_get_xpon_eth_uni_enable_by_index(int index);
