@@ -481,8 +481,8 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_string(&b, "alias", "cpe-ANI-1");
         blobmsg_add_u64(&b, "last_change", gpon_get_onu_ani_last_change());
         blobmsg_add_string(&b, "status", gpon_get_PM_status());
-        blobmsg_add_string(&b, "pon_mode", "XGS-PON");
-        blobmsg_add_u8(&b, "transceiver_number_of_entries", 1);
+        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
+        blobmsg_add_u32(&b, "transceiver_number_of_entries", 1);
     } 
     
     else if(str_equal(path, ANI_STATS, name_len))
@@ -530,9 +530,8 @@ static void data_model_for_get_method(const char* name) {
     
     else if(str_equal(path, TC_PM_GEM, name_len)) {
         SAH_TRACE_INFO("path='%s' => TC_PM_GEM", path);
-	// default port + 8 Gem ports, so 9 ports in total
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_framessent(0,9));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_framesreceived(0,9));  
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_framessent(1,8));  
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_framesreceived(1,8));  
         blobmsg_add_u64(&b, "frame_header_hec_errors", gpon_get_frame_header_hec_errors());  
         blobmsg_add_u64(&b, "key_errors", gpon_get_xgem_key_errors());  
     }
@@ -540,9 +539,9 @@ static void data_model_for_get_method(const char* name) {
     else if(str_equal(path, TC_PM_PLOAM, name_len)){
         SAH_TRACE_INFO("path='%s' => TC_PM_PLOAM", path);
         blobmsg_add_u64(&b, "mic_errors", gpon_get_ploam_micerrors());  
-        blobmsg_add_u64(&b, "downstream_message_count", gpon_get_ploam_rxmesgcount());  
+        blobmsg_add_u64(&b, "downstream_message_count", gpon_get_ploam_txmesgcount());  
         blobmsg_add_u64(&b, "ranging_time", gpon_get_ranging_time());  
-        blobmsg_add_u64(&b, "upstream_message_count", gpon_get_ploam_txmesgcount());  
+        blobmsg_add_u64(&b, "upstream_message_count", gpon_get_ploam_rxmesgcount());  
     }
     
     else if(str_equal(path, TC_PM_OMCI, name_len)){
@@ -706,11 +705,11 @@ static void data_model_for_get_method(const char* name) {
 
         blobmsg_add_u32(&b, "id", 0);
         blobmsg_add_u32(&b, "identifier", 2);
-        blobmsg_add_string(&b, "vendor_name", "Qualcomm");  
-        blobmsg_add_string(&b, "vendor_part_number", "QCF8000");  
+        blobmsg_add_string(&b, "vendor_name", gpon_get_PM_vendorname());  
+        blobmsg_add_string(&b, "vendor_part_number", gpon_get_PM_vendorpartnumber());  
         blobmsg_add_string(&b, "vendor_revision", gpon_get_pm_modulefirmwareversion());  
-        blobmsg_add_string(&b, "pon_mode", "XGS-PON");
-        blobmsg_add_string(&b, "connector", "SC"); 
+        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
+        blobmsg_add_string(&b, "connector", gpon_get_PM_connector()); 
         blobmsg_add_u64(&b, "nominal_bit_rate_downstream", gpon_get_nominalbitrate());
         blobmsg_add_u64(&b, "nominal_bit_rate_upstream", gpon_get_nominalbitrate());
         s_rx_power=gpon_get_rxp_signallevel();

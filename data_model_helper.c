@@ -90,7 +90,7 @@ uint64_t gpon_get_gem_transmittedframes(int index)
 {
     uint64_t result;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'tx frames'  -A65536 | awk '{print $4}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+3);
+    snprintf (cmd, sizeof(cmd), "omci -c 'gpon cnt gem' | awk '{print $5}' | awk 'NR==%d'", index+7);
     result = execute_int(cmd);
     return result;
 }
@@ -99,7 +99,7 @@ uint64_t gpon_get_gem_receivedframes(int index)
 {
     uint64_t result;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "cat /proc/trex/pmhd/gpon | grep 'rx frames'  -A65536 | awk '{print $4}' | awk 'NR==%d' | awk '{sum += $1} END {print sum}'", index+3);
+    snprintf (cmd, sizeof(cmd), "omci -c 'gpon cnt gem' | awk '{print $9}' | awk 'NR==%d'", index+7);
     result = execute_int(cmd);
     return result;
 }
@@ -251,58 +251,86 @@ char* gpon_get_gem_directions(int index)
     char sv[256] = {'\0'};
     int ret = RETURN_ERR;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "omci -c 'gpon gem' | grep Mcast -A65536 | awk '{print $10}' | awk 'NR==%d'", index+3);
+
+    snprintf(cmd, sizeof(cmd),"omci -c 'mib me 268' | grep 'Direction:' | awk 'NR==%d {print $3}' | cut -d'(' -f2 | cut -d')' -f1",index + 1);
+
     ret = execute(cmd, sv);
-    if(RETURN_OK != ret)
+    if(RETURN_OK != ret || strlen(sv) == 0)
     {
         printf("\nError %s\n", __func__);
     }
     else
     {
-        if(strcmp(sv,"0")==0)
+        if(strcmp(sv,"1")==0)
+        {
+            memset(retValue, 0, 256);
+            strlcpy(retValue, "UNI-to-ANI", strlen("UNI-to-ANI")+1);
+            return retValue;
+        }
+        else if (strcmp(sv, "2") == 0)
+        {
+            memset(retValue, 0, 256);
+            strlcpy(retValue, "ANI-to-UNI", strlen("ANI-to-UNI")+1);
+            return retValue;
+        }
+        else
         {
             memset(retValue, 0, 256);
             strlcpy(retValue, "bidirectional", strlen("bidirectional")+1);
             return retValue;
-        }  
-        else
-        {
-            memset(retValue, 0, 256);
-	    // Unidirectional
-            strlcpy(retValue, "ANI-to-UNI", strlen("ANI-to-UNI")+1);
-            return retValue;
         }
     }
     return "-1";
+
 }
 
 char* gpon_get_gem_traffctype(int index)
 {
     char sv[256] = {'\0'};
+    char meid[256] = {'\0'};
     int ret = RETURN_ERR;
     int res=RETURN_ERR;
     char cmd[256];
-    snprintf (cmd, sizeof(cmd), "cat /proc/trex/gpon/xgem | grep 'encrypt' | grep 'intid=' | awk '{print$7}' | awk 'NR==%d' | cut -d '(' -f2 | cut -d ')' -f1", index+1);
+
+    snprintf(cmd, sizeof(cmd),"omci -c 'mib me 268' | grep 'Direction:' | awk 'NR==%d {print $3}' | cut -d'(' -f2 | cut -d')' -f1",index + 1);
+
     ret = execute(cmd, sv);
-    if(RETURN_OK != ret)
+    if(RETURN_OK != ret || strlen(sv) == 0)
     {
         printf("\nError %s\n", __func__);
     }
     else
     {
-        res=strcmp(sv,"ucast");
+        //if Direction == 3 then Unicast
+        res=strcmp(sv,"3");
         if(res==0)
         {
             memset(retValue, 0, 256);
-	    // Unidirectional
-            strlcpy(retValue, "multicast", strlen("multicast")+1);
+            strlcpy(retValue, "unicast", strlen("unicast")+1);
             return retValue;
+        }
+        else if (strcmp(sv,"2")==0)
+        {
+            snprintf(cmd, sizeof(cmd),"omci -c 'mib me 268' | grep 'meid:' | awk 'NR==%d {print $2}' | cut -d'(' -f2 | cut -d')' -f1",index + 1);
+
+            ret = execute(cmd, meid);
+            if (RETURN_OK != ret || strlen(meid) == 0)
+            {
+                printf("\nError getting meid in %s\n", __func__);
+            }
+            //check for Multicast in me 281
+            snprintf(cmd, sizeof(cmd),"omci -c 'mib me related 281 268' | grep '281:' | grep '%s' | wc -l", meid);
+            ret = execute(cmd, sv);
+            if (RETURN_OK == ret && atoi(sv) > 0)
+            {
+                strlcpy(retValue, "multicast", sizeof(retValue));
+                return retValue;
+            }
         }
         else
         {
             memset(retValue, 0, 256);
-	    // Bidirectional
-            strlcpy(retValue, "unicast", strlen("unicast")+1);
+            strlcpy(retValue, "broadcast", strlen("broadcast")+1);
             return retValue;
         }
     }
@@ -480,7 +508,7 @@ int gpon_get_rxp_signallevel()
 {
     int result;
     result=execute_int("omci -c 'info anig' | grep rx | awk '{print $2 $3 $4}' | cut -d '(' -f2 | cut -d')' -f1 | sed 's/dBm//'");
-    result=result*10;
+    //result=result*10;
     return result;
 }
 
@@ -488,7 +516,7 @@ int gpon_get_txp_signallevel()
 {
     int result;
     result=execute_int("omci -c 'info anig' | grep tx | awk '{print $2 $3 $4}' | cut -d '(' -f2 | cut -d')' -f1 | sed 's/dBm//'");
-    result=result*10;
+    //result=result*10;
     return result;
 }
 
@@ -597,7 +625,7 @@ char* gpon_get_pm_modulefirmwareversion()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR, itemp;
-    ret = execute("cat /etc/openwrt_version", sv);
+    ret = execute("/etc/omci/script/misc/bosa.sh phymedia_info | grep moduleversion | cut -c 15-17", sv);
     if(RETURN_OK != ret)
     {
         printf("\nError %s\n", __func__);
@@ -650,6 +678,11 @@ char* gpon_get_PM_ponmode()
     {
         memset(retValue, 0, 256);
         strlcpy(retValue, sv, strlen(sv) + 1);
+	// ANI ODL
+        if (strcmp(retValue, "XGSPON") == 0)
+        {
+        strlcpy(retValue, "XGS-PON", strlen("XGS-PON") + 1);
+        }
         return retValue;
     }
     return "-1";
@@ -679,7 +712,7 @@ char* gpon_get_ploam_vendorid()
 {
     char sv[256] = {'\0'};
     int ret = RETURN_ERR, itemp;
-    ret = execute("cat /proc/trex/gpon/onu | grep 'sn' | cut -d'=' -f2- | cut -c 1-4", sv);
+    ret = execute("omci -c 'mib me 256' | grep Vendor_id | awk '{print $3}'| cut -d '(' -f2- | cut -d ')' -f1", sv);
     if(RETURN_OK != ret)
     {
         printf("\nError %s\n", __func__);
@@ -688,7 +721,6 @@ char* gpon_get_ploam_vendorid()
     {
         memset(retValue, 0, 256);
         strlcpy(retValue, sv, strlen(sv) + 1);
-        printf("sreehari: retvalue=%s\n", retValue);
         return retValue;
     }
     return "-1";
@@ -745,7 +777,7 @@ uint64_t gpon_get_onu_ani_stats(const char* keyword)
 uint64_t gpon_get_ani_errors_sent()
 {
     uint64_t result;
-    result = (gpon_get_onu_ani_stats("us_drop_mem_ov") + gpon_get_onu_ani_stats("us_drop_lkp_ov") + gpon_get_onu_ani_stats("us_drop_treat") + gpon_get_onu_ani_stats("rx_mac_err") + gpon_get_onu_ani_stats("rx_runt") + gpon_get_onu_ani_stats("rx_fcs_err") + gpon_get_onu_ani_stats("rx_pause"));
+    result = (gpon_get_onu_ani_stats("us_drop_mem_ov-") + gpon_get_onu_ani_stats("us_drop_lkp_ov-") + gpon_get_onu_ani_stats("us_drop_treat") + gpon_get_onu_ani_stats("rx_mac_err") + gpon_get_onu_ani_stats("rx_runt") + gpon_get_onu_ani_stats("rx_fcs_err") + gpon_get_onu_ani_stats("rx_pause"));
     return result;
 }
 
@@ -773,7 +805,7 @@ uint64_t gpon_get_ani_stats_packets_received()
 uint64_t gpon_get_ani_stats_discard_packets_sent()
 {
     uint64_t result;
-    result = (gpon_get_onu_ani_stats("us_drop_mem_ov") + gpon_get_onu_ani_stats("us_drop_lkp_ov") + gpon_get_onu_ani_stats("us_drop_treat"));
+    result = (gpon_get_onu_ani_stats("us_drop_mem_ov-") + gpon_get_onu_ani_stats("us_drop_lkp_ov-") + gpon_get_onu_ani_stats("us_drop_treat"));
     return result;
 }
 
@@ -1112,8 +1144,8 @@ int gpon_get_eth_uni_number_of_entries()
 int gpon_get_port_number_of_entries()
 {
     int result;
-    result=execute_int("omci -c 'gpon gem' | grep -c 0x");
-    return result-1;
+    result=execute_int("omci -c 'gpon gem' | awk '$3 ~ /^[1-9]+$/ { count++ } END { print count }'");
+    return result;
 }
 
 uint64_t gpon_get_eth_bytes_sent()
@@ -1254,7 +1286,7 @@ char* gpon_get_eth_uni_interdomain_id()
 uint64_t gpon_get_onu_ani_last_change()
 {
     uint64_t result;
-    result=execute_int("cat /proc/trex/gpon/onu | grep 'state:' | sed -n 's/.* \([0-9.]*\)s ago/\1/p'");
+    result=execute_int("cat /proc/trex/gpon/onu | grep 'state:' | awk '{print $2}' | cut -d'.' -f1");
     return result;
 }
 
@@ -1670,3 +1702,61 @@ char* gpon_get_eth_uni_ani_list_by_index(int index)
         return retValue;
     }
 }
+
+char* gpon_get_PM_vendorname()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR;
+    ret = execute("/etc/omci/script/misc/bosa.sh phymedia_info | grep vendor | cut -c 14-22", sv);
+
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+}
+
+char* gpon_get_PM_vendorpartnumber()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR;
+    ret = execute("/etc/omci/script/misc/bosa.sh phymedia_info | grep modulename | cut -c 12-18", sv);
+
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+}
+
+char* gpon_get_PM_connector()
+{
+    char sv[256] = {'\0'};
+    int ret = RETURN_ERR;
+    ret = execute("/etc/omci/script/misc/bosa.sh phymedia_info | grep connector | cut -c 11-12", sv);
+
+    if(RETURN_OK != ret)
+    {
+        printf("\nError %s\n", __func__);
+        return "-1";
+    }
+    else
+    {
+        memset(retValue, 0, 256);
+        strlcpy(retValue, sv, strlen(sv) + 1);
+        return retValue;
+    }
+}
+
