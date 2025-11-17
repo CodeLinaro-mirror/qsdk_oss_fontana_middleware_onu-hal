@@ -1137,7 +1137,7 @@ int gpon_get_software_number_of_entries()
 int gpon_get_eth_uni_number_of_entries()
 {
     int result;
-    result=execute_int("omci -c 'info conv_uni' | grep IF_NAME -A10 | grep LAN | grep -c eth");
+    result=execute_int("omci -c 'info conv_uni' | grep IF_NAME -A10 | grep -c LAN");
     return result;
 }
 
@@ -1430,75 +1430,6 @@ char* gpon_get_eth_uni_interdomain_id_by_index(int index)
     }
 
     return "-1";
-}
-
-uint64_t gpon_get_eth_bytes_sent_by_index(int index)
-{
-    uint64_t result1=-1, result2=-1;
-    char cmd[256];
-    char interface_name[64] = {'\0'};
-    int ret = RETURN_ERR;
-
-    snprintf(cmd, sizeof(cmd), "omci -c 'info conv_uni' | grep IF_NAME -A10 | grep 'LAN' | awk 'NR==%d {print $3}'", index + 1);
-    ret = execute(cmd, interface_name);
-
-    if(RETURN_OK != ret || strlen(interface_name) == 0) {
-        return -1;
-    }
-
-    // Get machine ID to determine the ethtool command format
-    result1=execute_int("fw_printenv | grep machid | cut -d'=' -f2");
-
-    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201 || result1==8071101)
-    {
-        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep tx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
-        result2=execute_int(cmd);
-    }
-    else if(result1==8050003)
-    {
-        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep tx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
-        result2=execute_int(cmd);
-    }
-    else if(result1==8050004)
-    {
-        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep tx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
-        result2=execute_int(cmd);
-    }
-    return result2;
-}
-
-uint64_t gpon_get_eth_bytes_received_by_index(int index)
-{
-    uint64_t result1=-1, result2=-1;
-    char cmd[256];
-    char interface_name[64] = {'\0'};
-    int ret = RETURN_ERR;
-
-    snprintf(cmd, sizeof(cmd), "omci -c 'info conv_uni' | grep IF_NAME -A10 | grep 'LAN' | awk 'NR==%d {print $3}'", index + 1);
-    ret = execute(cmd, interface_name);
-
-    if(RETURN_OK != ret || strlen(interface_name) == 0) {
-        return -1;
-    }
-
-    result1=execute_int("fw_printenv | grep machid | cut -d'=' -f2");
-
-    if (result1==8050001 || result1==8060001 || result1==8060002 || result1==8060201 || result1==8071101)
-    {
-        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep rx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
-        result2=execute_int(cmd);
-    }
-    else if(result1==8050003)
-    {
-        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep rx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
-        result2=execute_int(cmd);
-    }
-    else if(result1==8050004)
-    {
-        snprintf(cmd, sizeof(cmd), "ethtool -S %s | grep rx_bytes: | head -n 1 | cut -d':' -f2 | tr -d ' '", interface_name);
-        result2=execute_int(cmd);
-    }
-    return result2;
 }
 
 uint64_t gpon_get_eth_packets_sent_by_index(int index)

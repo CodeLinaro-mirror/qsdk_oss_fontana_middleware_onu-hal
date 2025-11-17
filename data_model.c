@@ -437,8 +437,8 @@ static void data_model_for_get_method(const char* name) {
             if (is_ethernet_uni_stats_object(name)) {
                 // Handle ethernet UNI stats
                 SAH_TRACE_INFO("path='%s' => ETH_UNI_%d_STATS", path, uni_index);
-                blobmsg_add_u64(&b, "bytes_sent", gpon_get_eth_bytes_sent_by_index(uni_index - 1) );
-                blobmsg_add_u64(&b, "bytes_received", gpon_get_eth_bytes_received_by_index(uni_index - 1));
+                blobmsg_add_u32(&b, "bytes_sent", 0);
+                blobmsg_add_u32(&b, "bytes_received", 0);
                 blobmsg_add_u64(&b, "packets_sent", gpon_get_eth_packets_sent_by_index(uni_index - 1));
                 blobmsg_add_u64(&b, "packets_received", gpon_get_eth_packets_received_by_index(uni_index - 1));
                 blobmsg_add_u64(&b, "errors_sent", gpon_get_eth_errors_sent_by_index(uni_index - 1));
@@ -451,7 +451,7 @@ static void data_model_for_get_method(const char* name) {
                 blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_multicast_packets_received_by_index(uni_index - 1));
                 blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_broadcast_packets_sent_by_index(uni_index - 1));
                 blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_broadcast_packets_received_by_index(uni_index - 1));
-                blobmsg_add_u64(&b, "unknown_proto_packets_received", 0);
+                blobmsg_add_u32(&b, "unknown_proto_packets_received", 0);
             } else {
                 // Handle ethernet UNI object
                 SAH_TRACE_INFO("path='%s' => ETH_UNI_%d", path, uni_index);
