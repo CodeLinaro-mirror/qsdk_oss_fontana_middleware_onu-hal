@@ -463,7 +463,7 @@ static void data_model_for_get_method(const char* name) {
                 blobmsg_add_string(&b, "alias", alias);
                 blobmsg_add_string(&b, "status",  gpon_get_eth_uni_status_by_index(uni_index - 1));
                 blobmsg_add_string(&b, "ani_list",  gpon_get_eth_uni_ani_list_by_index(uni_index - 1));
-                blobmsg_add_string(&b, "last_change", "");
+                blobmsg_add_u32(&b, "last_change", 0);
                 blobmsg_add_string(&b, "lower_layers", "");
                 blobmsg_add_string(&b, "interdomain_id",  gpon_get_eth_uni_interdomain_id_by_index(uni_index - 1));
                 blobmsg_add_string(&b, "interdomain_name", " ");

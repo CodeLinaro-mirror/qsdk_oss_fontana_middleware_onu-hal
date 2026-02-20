@@ -711,7 +711,7 @@ char*  gpon_get_pm_operationalstate()
 char* gpon_get_ploam_vendorid()
 {
     char sv[256] = {'\0'};
-    int ret = RETURN_ERR, itemp;
+    int ret = RETURN_ERR;
     ret = execute("omci -c 'mib me 256' | grep Vendor_id | awk '{print $3}'| cut -d '(' -f2- | cut -d ')' -f1", sv);
     if(RETURN_OK != ret)
     {
@@ -719,9 +719,20 @@ char* gpon_get_ploam_vendorid()
     }
     else
     {
-        memset(retValue, 0, 256);
-        strlcpy(retValue, sv, strlen(sv) + 1);
-        return retValue;
+        if(strlen(sv) > 4) {
+            uint32_t vendor_id_num = (uint32_t)strtoul(sv, NULL, 10);
+            memset(retValue, 0, 256);
+            retValue[0] = (char)((vendor_id_num >> 24) & 0xFF);  /* 0x51 = 'Q' */
+            retValue[1] = (char)((vendor_id_num >> 16) & 0xFF);  /* 0x43 = 'C' */
+            retValue[2] = (char)((vendor_id_num >> 8) & 0xFF);   /* 0x4F = 'O' */
+            retValue[3] = (char)(vendor_id_num & 0xFF);          /* 0x4D = 'M' */
+            retValue[4] = '\0';
+            return retValue;
+        } else {
+            memset(retValue, 0, 256);
+            strlcpy(retValue, sv, strlen(sv) + 1);
+            return retValue;
+        }
     }
     return "-1";
 }
