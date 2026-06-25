@@ -887,7 +887,7 @@ static int common_method_handler(struct ubus_context* ctx, struct ubus_object* o
         }
     }
 
-    uloop_timeout_set(&mreq->timeout, 1000);
+    uloop_timeout_set(&mreq->timeout, 0);
 
     rc = 0;
 
