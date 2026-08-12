@@ -392,6 +392,25 @@ static void data_model_for_get_method(const char* name) {
     if(str_equal(path, XPON_ONU, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => XPON_ONU", path);
+#ifdef BOARD_HERMOSA
+        /* Hermosa (ipq52xx): run script ONCE, parse all fields in-memory.*/
+        char onu_index[4] = "1";
+        const size_t idx_pos = strlen("xpon_onu.");
+        if(strlen(name) > idx_pos)
+        {
+            onu_index[0] = name[idx_pos];
+            onu_index[1] = '\0';
+        }
+        gpon_hermosa_run_script("getXponOnuContent", onu_index);
+        blobmsg_add_u8(&b, "enable", s_onu_enabled ? 1 : 0);
+        blobmsg_add_string(&b, "version", gpon_hermosa_parse_field("Version"));
+        blobmsg_add_string(&b, "equipment_id", gpon_hermosa_parse_field("EquipmentId"));
+        blobmsg_add_u32(&b, "software_number_of_entries", (uint32_t)gpon_hermosa_parse_field_int("SoftwareImageNumberOfEntries"));
+        blobmsg_add_u32(&b, "ethernet_uni_number_of_entries", (uint32_t)gpon_hermosa_parse_field_int("EthernetUNINumberOfEntries"));
+        blobmsg_add_u32(&b, "ani_number_of_entries", (uint32_t)gpon_hermosa_parse_field_int("ANINumberOfEntries"));
+        blobmsg_add_string(&b, "name", gpon_hermosa_parse_field("Name"));
+#else
+        /* Marina / Alder / Miami*/
         blobmsg_add_u8(&b, "enable", s_onu_enabled ? 1 : 0);
         blobmsg_add_string(&b, "version", gpon_get_pm_modulefirmwareversion());
         blobmsg_add_string(&b, "equipment_id", gpon_get_equipment_id());
@@ -408,7 +427,8 @@ static void data_model_for_get_method(const char* name) {
             SAH_TRACE_INFO("name='%s' => XPON_ONU_TWO", name);
             blobmsg_add_string(&b, "name", "ONU_TWO");
         }
-    } 
+#endif
+    }
     
     else if(str_equal(path, SW_IMG_1, name_len)) 
     {
@@ -434,8 +454,49 @@ static void data_model_for_get_method(const char* name) {
     else if (is_ethernet_uni_object(name)) {
         int uni_index = extract_uni_index_from_name(name);
         if (uni_index > 0 && uni_index <= max_eth_uni_count) {
+#ifdef BOARD_HERMOSA
+            /* Hermosa: EthernetUNI build script */
+            char uni_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(uni_script_index, sizeof(uni_script_index), "%c.%d", onu_nr_char, uni_index);
+
             if (is_ethernet_uni_stats_object(name)) {
-                // Handle ethernet UNI stats
+                /* Hermosa EthernetUNI Stats*/
+                SAH_TRACE_INFO("path='%s' => ETH_UNI_%d_STATS (Hermosa)", path, uni_index);
+                gpon_hermosa_run_script("getXponOnuEthernetUNIStatsContent", uni_script_index);
+                blobmsg_add_u64(&b, "bytes_sent",                  gpon_hermosa_parse_field_int("BytesSent"));
+                blobmsg_add_u64(&b, "bytes_received",              gpon_hermosa_parse_field_int("BytesReceived"));
+                blobmsg_add_u64(&b, "packets_sent",                gpon_hermosa_parse_field_int("PacketsSent"));
+                blobmsg_add_u64(&b, "packets_received",            gpon_hermosa_parse_field_int("PacketsReceived"));
+                blobmsg_add_u64(&b, "errors_sent",                 gpon_hermosa_parse_field_int("ErrorsSent"));
+                blobmsg_add_u64(&b, "errors_received",             gpon_hermosa_parse_field_int("ErrorsReceived"));
+                blobmsg_add_u64(&b, "unicast_packets_sent",        gpon_hermosa_parse_field_int("UnicastPacketsSent"));
+                blobmsg_add_u64(&b, "unicast_packets_received",    gpon_hermosa_parse_field_int("UnicastPacketsReceived"));
+                blobmsg_add_u64(&b, "discard_packets_sent",        gpon_hermosa_parse_field_int("DiscardPacketsSent"));
+                blobmsg_add_u64(&b, "discard_packets_received",    gpon_hermosa_parse_field_int("DiscardPacketsReceived"));
+                blobmsg_add_u64(&b, "multicast_packets_sent",      gpon_hermosa_parse_field_int("MulticastPacketsSent"));
+                blobmsg_add_u64(&b, "multicast_packets_received",  gpon_hermosa_parse_field_int("MulticastPacketsReceived"));
+                blobmsg_add_u64(&b, "broadcast_packets_sent",      gpon_hermosa_parse_field_int("BroadcastPacketsSent"));
+                blobmsg_add_u64(&b, "broadcast_packets_received",  gpon_hermosa_parse_field_int("BroadcastPacketsReceived"));
+                blobmsg_add_u32(&b, "unknown_proto_packets_received", 0);
+            } else {
+                /* Hermosa EthernetUNI Content*/
+                SAH_TRACE_INFO("path='%s' => ETH_UNI_%d (Hermosa)", path, uni_index);
+                gpon_hermosa_run_script("getXponOnuEthernetUNIContent", uni_script_index);
+                const char* en_val = gpon_hermosa_parse_field("Enable");
+                blobmsg_add_u8(&b, "enable", (strcmp(en_val, "true") == 0) ? 1 : 0);
+                blobmsg_add_string(&b, "name",             gpon_hermosa_parse_field("Name"));
+                blobmsg_add_string(&b, "alias",            gpon_hermosa_parse_field("Alias"));
+                blobmsg_add_string(&b, "status",           gpon_hermosa_parse_field("Status"));
+                blobmsg_add_string(&b, "ani_list",         gpon_hermosa_parse_field("ANIs"));
+                blobmsg_add_u32(&b, "last_change", 0);
+                blobmsg_add_string(&b, "lower_layers",     "");
+                blobmsg_add_string(&b, "interdomain_id",   gpon_hermosa_parse_field("InterdomainID"));
+                blobmsg_add_string(&b, "interdomain_name", gpon_hermosa_parse_field("InterdomainName"));
+            }
+#else
+            /* Marina / Alder / Miami*/
+            if (is_ethernet_uni_stats_object(name)) {
                 SAH_TRACE_INFO("path='%s' => ETH_UNI_%d_STATS", path, uni_index);
                 blobmsg_add_u32(&b, "bytes_sent", 0);
                 blobmsg_add_u32(&b, "bytes_received", 0);
@@ -453,11 +514,9 @@ static void data_model_for_get_method(const char* name) {
                 blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_broadcast_packets_received_by_index(uni_index - 1));
                 blobmsg_add_u32(&b, "unknown_proto_packets_received", 0);
             } else {
-                // Handle ethernet UNI object
                 SAH_TRACE_INFO("path='%s' => ETH_UNI_%d", path, uni_index);
                 char alias[64];
                 snprintf(alias, sizeof(alias), "cpe-EthernetUNI-%d", uni_index);
-                 
                 blobmsg_add_u8(&b, "enable", gpon_get_xpon_eth_uni_enable_by_index(uni_index - 1));
                 blobmsg_add_string(&b, "name",  gpon_get_eth_uni_name_by_index(uni_index - 1));
                 blobmsg_add_string(&b, "alias", alias);
@@ -468,6 +527,7 @@ static void data_model_for_get_method(const char* name) {
                 blobmsg_add_string(&b, "interdomain_id",  gpon_get_eth_uni_interdomain_id_by_index(uni_index - 1));
                 blobmsg_add_string(&b, "interdomain_name", " ");
             }
+#endif
         } else {
             SAH_TRACE_ERROR("Invalid ethernet UNI index: %d", uni_index);
         }
@@ -476,6 +536,21 @@ static void data_model_for_get_method(const char* name) {
     else if(str_equal(path, ANI_1, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => ANI_1", path);
+#ifdef BOARD_HERMOSA
+        /* Hermosa ANI Data Model*/
+        char ani_script_index[8];
+        char onu_nr_char = name[strlen("xpon_onu.")];
+        snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+        gpon_hermosa_run_script("getXponOnuAniContent", ani_script_index);
+        blobmsg_add_u8(&b, "enable", s_ani_one_enabled ? 1 : 0);
+        blobmsg_add_string(&b, "name", gpon_hermosa_parse_field("Name"));
+        blobmsg_add_string(&b, "alias", gpon_hermosa_parse_field("Alias"));
+        blobmsg_add_u64(&b, "last_change", gpon_hermosa_parse_field_int("LastChange"));
+        blobmsg_add_string(&b, "status", gpon_hermosa_parse_field("Status"));
+        blobmsg_add_string(&b, "pon_mode", gpon_hermosa_parse_field("PONMode"));
+        blobmsg_add_u32(&b, "transceiver_number_of_entries", (uint32_t)gpon_hermosa_parse_field_int("TransceiverNumberOfEntries"));
+#else
+        /* Marina / Alder / Miami*/
         blobmsg_add_u8(&b, "enable", s_ani_one_enabled ? 1 : 0);
         blobmsg_add_string(&b, "name", "MyANI");
         blobmsg_add_string(&b, "alias", "cpe-ANI-1");
@@ -483,245 +558,553 @@ static void data_model_for_get_method(const char* name) {
         blobmsg_add_string(&b, "status", gpon_get_PM_status());
         blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
         blobmsg_add_u32(&b, "transceiver_number_of_entries", 1);
+#endif
     } 
     
     else if(str_equal(path, ANI_STATS, name_len))
     {
         SAH_TRACE_INFO("path='%s' => ANI_STATS", path);
+#ifdef BOARD_HERMOSA
+        {
+            char ani_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniStatsContent", ani_script_index);
+            blobmsg_add_u64(&b, "bytes_sent",                  gpon_hermosa_parse_field_int("BytesSent"));
+            blobmsg_add_u64(&b, "bytes_received",              gpon_hermosa_parse_field_int("BytesReceived"));
+            blobmsg_add_u64(&b, "packets_sent",                gpon_hermosa_parse_field_int("PacketsSent"));
+            blobmsg_add_u64(&b, "packets_received",            gpon_hermosa_parse_field_int("PacketsReceived"));
+            blobmsg_add_u64(&b, "errors_sent",                 gpon_hermosa_parse_field_int("ErrorsSent"));
+            blobmsg_add_u64(&b, "errors_received",             gpon_hermosa_parse_field_int("ErrorsReceived"));
+            blobmsg_add_u64(&b, "unicast_packets_sent",        gpon_hermosa_parse_field_int("UnicastPacketsSent"));
+            blobmsg_add_u64(&b, "unicast_packets_received",    gpon_hermosa_parse_field_int("UnicastPacketsReceived"));
+            blobmsg_add_u64(&b, "discard_packets_sent",        gpon_hermosa_parse_field_int("DiscardPacketsSent"));
+            blobmsg_add_u64(&b, "discard_packets_received",    gpon_hermosa_parse_field_int("DiscardPacketsReceived"));
+            blobmsg_add_u64(&b, "multicast_packets_sent",      gpon_hermosa_parse_field_int("MulticastPacketsSent"));
+            blobmsg_add_u64(&b, "multicast_packets_received",  gpon_hermosa_parse_field_int("MulticastPacketsReceived"));
+            blobmsg_add_u64(&b, "broadcast_packets_sent",      gpon_hermosa_parse_field_int("BroadcastPacketsSent"));
+            blobmsg_add_u64(&b, "broadcast_packets_received",  gpon_hermosa_parse_field_int("BroadcastPacketsReceived"));
+            blobmsg_add_u64(&b, "unknown_proto_packets_received", 0);
+        }
+#else
+        /* Marina / Alder / Miami*/
         blobmsg_add_u64(&b, "bytes_sent", gpon_get_onu_ani_stats("us_byte_out-"));
-        blobmsg_add_u64(&b, "bytes_received", gpon_get_onu_ani_stats("ds_byte_in-"));  
-        blobmsg_add_u64(&b, "packets_sent", gpon_get_ani_stats_packets_sent());  
-        blobmsg_add_u64(&b, "packets_received", gpon_get_ani_stats_packets_received());  
+        blobmsg_add_u64(&b, "bytes_received", gpon_get_onu_ani_stats("ds_byte_in-"));
+        blobmsg_add_u64(&b, "packets_sent", gpon_get_ani_stats_packets_sent());
+        blobmsg_add_u64(&b, "packets_received", gpon_get_ani_stats_packets_received());
         blobmsg_add_u64(&b, "errors_sent", gpon_get_ani_errors_sent());
-        blobmsg_add_u64(&b, "errors_received", gpon_get_ani_errors_received()); 
-        blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_onu_ani_stats("us_ucast"));  
-        blobmsg_add_u64(&b, "unicast_packets_received", gpon_get_onu_ani_stats("ds_ucast"));  
-        blobmsg_add_u64(&b, "discard_packets_sent", gpon_get_ani_stats_discard_packets_sent());  
-        blobmsg_add_u64(&b, "discard_packets_received", gpon_get_ani_stats_discard_packets_received());  
-        blobmsg_add_u64(&b, "multicast_packets_sent", gpon_get_onu_ani_stats("us_mcast"));  
-        blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_onu_ani_stats("ds_mcast"));  
-        blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_onu_ani_stats("us_bcast"));  
-        blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_onu_ani_stats("ds_bcast"));  
-        blobmsg_add_u64(&b, "unknown_proto_packets_received", 0); // always 0
-
+        blobmsg_add_u64(&b, "errors_received", gpon_get_ani_errors_received());
+        blobmsg_add_u64(&b, "unicast_packets_sent", gpon_get_onu_ani_stats("us_ucast"));
+        blobmsg_add_u64(&b, "unicast_packets_received", gpon_get_onu_ani_stats("ds_ucast"));
+        blobmsg_add_u64(&b, "discard_packets_sent", gpon_get_ani_stats_discard_packets_sent());
+        blobmsg_add_u64(&b, "discard_packets_received", gpon_get_ani_stats_discard_packets_received());
+        blobmsg_add_u64(&b, "multicast_packets_sent", gpon_get_onu_ani_stats("us_mcast"));
+        blobmsg_add_u64(&b, "multicast_packets_received", gpon_get_onu_ani_stats("ds_mcast"));
+        blobmsg_add_u64(&b, "broadcast_packets_sent", gpon_get_onu_ani_stats("us_bcast"));
+        blobmsg_add_u64(&b, "broadcast_packets_received", gpon_get_onu_ani_stats("ds_bcast"));
+        blobmsg_add_u64(&b, "unknown_proto_packets_received", 0); /* always 0 */
+#endif
     }
 
     else if(str_equal(path, ONU_ACTIVATION, name_len)) {
         SAH_TRACE_INFO("path='%s' => ONU_ACTIVATION", path);
-        char onu_state[3];
-        snprintf(onu_state, 3, "O%u", s_onu_state);
-        blobmsg_add_string(&b, "onu_state", gpon_get_pm_operationalstate());  
-        blobmsg_add_string(&b, "vendor_id", gpon_get_ploam_vendorid());  
-        blobmsg_add_string(&b, "serial_number", gpon_get_ploam_serialnumber()); 
-        blobmsg_add_u32(&b, "onu_id", gpon_get_ploam_onuid());  
+#ifdef BOARD_HERMOSA
+        {
+            char ani_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniTcOnuActivationtContent", ani_script_index);
+            blobmsg_add_string(&b, "onu_state",    gpon_hermosa_parse_field("ONUState"));
+            blobmsg_add_string(&b, "vendor_id",    gpon_hermosa_parse_field("VendorID"));
+            blobmsg_add_string(&b, "serial_number", gpon_hermosa_parse_field("SerialNumber"));
+            blobmsg_add_u32(&b, "onu_id", (uint32_t)gpon_hermosa_parse_field_int("ONUID"));
+        }
+#else
+        /* Marina / Alder / Miami*/
+        {
+            char onu_state[3];
+            snprintf(onu_state, 3, "O%u", s_onu_state);
+            blobmsg_add_string(&b, "onu_state", gpon_get_pm_operationalstate());
+            blobmsg_add_string(&b, "vendor_id", gpon_get_ploam_vendorid());
+            blobmsg_add_string(&b, "serial_number", gpon_get_ploam_serialnumber());
+            blobmsg_add_u32(&b, "onu_id", gpon_get_ploam_onuid());
+        }
+#endif
     }
 
     else if(str_equal(path, ANU_TC_PM_PHY, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => ANU_TC_PM_PHY", path);
-        blobmsg_add_u64(&b, "corrected_fec_bytes", gpon_get_onu_ani_tc_pm("*fec_byte_corrected"));  
-        blobmsg_add_u64(&b, "corrected_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_corrected"));  
-        blobmsg_add_u64(&b, "uncorrectable_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_uncorrected"));  
-        blobmsg_add_u64(&b, "total_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd"));  
-        blobmsg_add_u64(&b, "psbd_hec_error_count", gpon_get_onu_ani_tc_pm("psbd_hec_err"));  
-        blobmsg_add_u64(&b, "header_hec_error_count", gpon_get_onu_ani_tc_pm("fs_hec_err"));  
-        blobmsg_add_u64(&b, "unknown_profile", gpon_get_onu_ani_tc_pm("unknown_bst_prof"));  
+#ifdef BOARD_HERMOSA
+        {
+            char ani_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniTcPmPhyContent", ani_script_index);
+            blobmsg_add_u64(&b, "corrected_fec_bytes",         gpon_hermosa_parse_field_int("CorrectedFECBytes"));
+            blobmsg_add_u64(&b, "corrected_fec_codewords",     gpon_hermosa_parse_field_int("CorrectedFECCodewords"));
+            blobmsg_add_u64(&b, "uncorrectable_fec_codewords", gpon_hermosa_parse_field_int("UncorrectableFECCodewords"));
+            blobmsg_add_u64(&b, "total_fec_codewords",         gpon_hermosa_parse_field_int("TotalFECCodewords"));
+            blobmsg_add_u64(&b, "psbd_hec_error_count",        gpon_hermosa_parse_field_int("PSBdHECErrorCount"));
+            blobmsg_add_u64(&b, "header_hec_error_count",      gpon_hermosa_parse_field_int("HeaderHECErrorCount"));
+            blobmsg_add_u64(&b, "unknown_profile",             gpon_hermosa_parse_field_int("UnknownProfile"));
+        }
+#else
+        /* Marina / Alder / Miami*/
+        blobmsg_add_u64(&b, "corrected_fec_bytes", gpon_get_onu_ani_tc_pm("*fec_byte_corrected"));
+        blobmsg_add_u64(&b, "corrected_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_corrected"));
+        blobmsg_add_u64(&b, "uncorrectable_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd_uncorrected"));
+        blobmsg_add_u64(&b, "total_fec_codewords", gpon_get_onu_ani_tc_pm("fec_codewd"));
+        blobmsg_add_u64(&b, "psbd_hec_error_count", gpon_get_onu_ani_tc_pm("psbd_hec_err"));
+        blobmsg_add_u64(&b, "header_hec_error_count", gpon_get_onu_ani_tc_pm("fs_hec_err"));
+        blobmsg_add_u64(&b, "unknown_profile", gpon_get_onu_ani_tc_pm("unknown_bst_prof"));
+#endif
     }
     
     else if(str_equal(path, TC_PM_GEM, name_len)) {
         SAH_TRACE_INFO("path='%s' => TC_PM_GEM", path);
-        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_framessent(1,8));  
-        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_framesreceived(1,8));  
-        blobmsg_add_u64(&b, "frame_header_hec_errors", gpon_get_frame_header_hec_errors());  
-        blobmsg_add_u64(&b, "key_errors", gpon_get_xgem_key_errors());  
+#ifdef BOARD_HERMOSA
+        {
+            char ani_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniTcPmGemContent", ani_script_index);
+            blobmsg_add_u64(&b, "frames_sent",             gpon_hermosa_parse_field_int("FramesSent"));
+            blobmsg_add_u64(&b, "frames_received",         gpon_hermosa_parse_field_int("FramesReceived"));
+            blobmsg_add_u64(&b, "frame_header_hec_errors", gpon_hermosa_parse_field_int("FrameHeaderHECErrors"));
+            blobmsg_add_u64(&b, "key_errors",              gpon_hermosa_parse_field_int("KeyErrors"));
+        }
+#else
+        /* Marina / Alder / Miami*/
+        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_framessent(1,8));
+        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_framesreceived(1,8));
+        blobmsg_add_u64(&b, "frame_header_hec_errors", gpon_get_frame_header_hec_errors());
+        blobmsg_add_u64(&b, "key_errors", gpon_get_xgem_key_errors());
+#endif
     }
     
     else if(str_equal(path, TC_PM_PLOAM, name_len)){
         SAH_TRACE_INFO("path='%s' => TC_PM_PLOAM", path);
-        blobmsg_add_u64(&b, "mic_errors", gpon_get_ploam_micerrors());  
-        blobmsg_add_u64(&b, "downstream_message_count", gpon_get_ploam_txmesgcount());  
-        blobmsg_add_u64(&b, "ranging_time", gpon_get_ranging_time());  
-        blobmsg_add_u64(&b, "upstream_message_count", gpon_get_ploam_rxmesgcount());  
+#ifdef BOARD_HERMOSA
+        {
+            char ani_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniTcPmPloamContent", ani_script_index);
+            blobmsg_add_u64(&b, "mic_errors",               gpon_hermosa_parse_field_int("MICErrors"));
+            blobmsg_add_u64(&b, "downstream_message_count", gpon_hermosa_parse_field_int("DownstreamMessageCount"));
+            blobmsg_add_u64(&b, "ranging_time",             gpon_hermosa_parse_field_int("RangingTime"));
+            blobmsg_add_u64(&b, "upstream_message_count",   gpon_hermosa_parse_field_int("UpstreamMessageCount"));
+        }
+#else
+        /* Marina / Alder / Miami*/
+        blobmsg_add_u64(&b, "mic_errors", gpon_get_ploam_micerrors());
+        blobmsg_add_u64(&b, "downstream_message_count", gpon_get_ploam_txmesgcount());
+        blobmsg_add_u64(&b, "ranging_time", gpon_get_ranging_time());
+        blobmsg_add_u64(&b, "upstream_message_count", gpon_get_ploam_rxmesgcount());
+#endif
     }
     
     else if(str_equal(path, TC_PM_OMCI, name_len)){
         SAH_TRACE_INFO("path='%s' => TC_PM_OMCI", path);
-        blobmsg_add_u64(&b, "baseline_messages_received", gpon_get_omci_baselinemessagecount());  
-        blobmsg_add_u64(&b, "extended_messages_received", gpon_get_omci_extendedmessagecount());  
-        blobmsg_add_u64(&b, "mic_errors", gpon_get_omci_micerrors());  
+#ifdef BOARD_HERMOSA
+        {
+            char ani_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniTcPmOmciContent", ani_script_index);
+            blobmsg_add_u64(&b, "baseline_messages_received", gpon_hermosa_parse_field_int("BaselineMessagesReceived"));
+            blobmsg_add_u64(&b, "extended_messages_received", gpon_hermosa_parse_field_int("ExtendedMessagesReceived"));
+            blobmsg_add_u64(&b, "mic_errors",                 gpon_hermosa_parse_field_int("MICErrors"));
+        }
+#else
+        /* Marina / Alder / Miami*/
+        blobmsg_add_u64(&b, "baseline_messages_received", gpon_get_omci_baselinemessagecount());
+        blobmsg_add_u64(&b, "extended_messages_received", gpon_get_omci_extendedmessagecount());
+        blobmsg_add_u64(&b, "mic_errors", gpon_get_omci_micerrors());
+#endif
     }
 
     else if(str_equal(path, TC_GEM, name_len)){
         SAH_TRACE_INFO("path='%s' => TC_GEM", path);
+#ifdef BOARD_HERMOSA
+        {
+            char ani_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniTcGemPortNumberOfEntries", ani_script_index);
+            blobmsg_add_u32(&b, "port_number_of_entries", (uint32_t)gpon_hermosa_parse_field_int("PortNumberOfEntries"));
+        }
+#else
+        /* Marina / Alder / Miami*/
         blobmsg_add_u32(&b, "port_number_of_entries", gpon_get_port_number_of_entries());
+#endif
     }
 
     else if(str_equal(path, GEM_PORT_1, name_len))
     {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_1", path);
+#ifdef BOARD_HERMOSA
+        { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+          snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.1", onu_nr_char);
+          gpon_hermosa_run_script("getXponOnuAniTcGemPortContent", gem_script_index);
+          blobmsg_add_u32(&b, "port_id", (uint32_t)gpon_hermosa_parse_field_int("PortID"));
+          blobmsg_add_string(&b, "direction", gpon_hermosa_parse_field("Direction"));
+          blobmsg_add_string(&b, "port_type", gpon_hermosa_parse_field("PortType")); }
+#else
         blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(1));
         blobmsg_add_string(&b, "direction", gpon_get_gem_directions(1));
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(1));
+#endif
     }
     else if(str_equal(path, GEM_PORT_2, name_len))
     {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_2", path);
+#ifdef BOARD_HERMOSA
+        { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+          snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.2", onu_nr_char);
+          gpon_hermosa_run_script("getXponOnuAniTcGemPortContent", gem_script_index);
+          blobmsg_add_u32(&b, "port_id", (uint32_t)gpon_hermosa_parse_field_int("PortID"));
+          blobmsg_add_string(&b, "direction", gpon_hermosa_parse_field("Direction"));
+          blobmsg_add_string(&b, "port_type", gpon_hermosa_parse_field("PortType")); }
+#else
         blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(2));
         blobmsg_add_string(&b, "direction", gpon_get_gem_directions(2));
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(2));
+#endif
     }
     else if(str_equal(path, GEM_PORT_3, name_len))
     {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_3", path);
+#ifdef BOARD_HERMOSA
+        { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+          snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.3", onu_nr_char);
+          gpon_hermosa_run_script("getXponOnuAniTcGemPortContent", gem_script_index);
+          blobmsg_add_u32(&b, "port_id", (uint32_t)gpon_hermosa_parse_field_int("PortID"));
+          blobmsg_add_string(&b, "direction", gpon_hermosa_parse_field("Direction"));
+          blobmsg_add_string(&b, "port_type", gpon_hermosa_parse_field("PortType")); }
+#else
         blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(3));
         blobmsg_add_string(&b, "direction", gpon_get_gem_directions(3));
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(3));
+#endif
     }
     else if(str_equal(path, GEM_PORT_4, name_len))
     {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_4", path);
+#ifdef BOARD_HERMOSA
+        { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+          snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.4", onu_nr_char);
+          gpon_hermosa_run_script("getXponOnuAniTcGemPortContent", gem_script_index);
+          blobmsg_add_u32(&b, "port_id", (uint32_t)gpon_hermosa_parse_field_int("PortID"));
+          blobmsg_add_string(&b, "direction", gpon_hermosa_parse_field("Direction"));
+          blobmsg_add_string(&b, "port_type", gpon_hermosa_parse_field("PortType")); }
+#else
         blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(4));
         blobmsg_add_string(&b, "direction", gpon_get_gem_directions(4));
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(4));
+#endif
     }
     else if(str_equal(path, GEM_PORT_5, name_len))
     {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_5", path);
+#ifdef BOARD_HERMOSA
+        { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+          snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.5", onu_nr_char);
+          gpon_hermosa_run_script("getXponOnuAniTcGemPortContent", gem_script_index);
+          blobmsg_add_u32(&b, "port_id", (uint32_t)gpon_hermosa_parse_field_int("PortID"));
+          blobmsg_add_string(&b, "direction", gpon_hermosa_parse_field("Direction"));
+          blobmsg_add_string(&b, "port_type", gpon_hermosa_parse_field("PortType")); }
+#else
         blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(5));
         blobmsg_add_string(&b, "direction", gpon_get_gem_directions(5));
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(5));
+#endif
     }
     else if(str_equal(path, GEM_PORT_6, name_len))
     {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_6", path);
+#ifdef BOARD_HERMOSA
+        { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+          snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.6", onu_nr_char);
+          gpon_hermosa_run_script("getXponOnuAniTcGemPortContent", gem_script_index);
+          blobmsg_add_u32(&b, "port_id", (uint32_t)gpon_hermosa_parse_field_int("PortID"));
+          blobmsg_add_string(&b, "direction", gpon_hermosa_parse_field("Direction"));
+          blobmsg_add_string(&b, "port_type", gpon_hermosa_parse_field("PortType")); }
+#else
         blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(6));
         blobmsg_add_string(&b, "direction", gpon_get_gem_directions(6));
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(6));
+#endif
     }
     else if(str_equal(path, GEM_PORT_7, name_len))
     {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_7", path);
+#ifdef BOARD_HERMOSA
+        { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+          snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.7", onu_nr_char);
+          gpon_hermosa_run_script("getXponOnuAniTcGemPortContent", gem_script_index);
+          blobmsg_add_u32(&b, "port_id", (uint32_t)gpon_hermosa_parse_field_int("PortID"));
+          blobmsg_add_string(&b, "direction", gpon_hermosa_parse_field("Direction"));
+          blobmsg_add_string(&b, "port_type", gpon_hermosa_parse_field("PortType")); }
+#else
         blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(7));
         blobmsg_add_string(&b, "direction", gpon_get_gem_directions(7));
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(7));
+#endif
     }
     else if(str_equal(path, GEM_PORT_8, name_len))
     {
         SAH_TRACE_INFO("path='%s' => GEM_PORT_8", path);
+#ifdef BOARD_HERMOSA
+        { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+          snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.8", onu_nr_char);
+          gpon_hermosa_run_script("getXponOnuAniTcGemPortContent", gem_script_index);
+          blobmsg_add_u32(&b, "port_id", (uint32_t)gpon_hermosa_parse_field_int("PortID"));
+          blobmsg_add_string(&b, "direction", gpon_hermosa_parse_field("Direction"));
+          blobmsg_add_string(&b, "port_type", gpon_hermosa_parse_field("PortType")); }
+#else
         blobmsg_add_u32(&b, "port_id", gpon_get_gem_port_id(8));
         blobmsg_add_string(&b, "direction", gpon_get_gem_directions(8));
         blobmsg_add_string(&b, "port_type", gpon_get_gem_traffctype(8));
+#endif
     }
 
     else if(str_equal(path, PM_GEM_PORT_1, name_len)) 
     {
        SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_1", path);
+#ifdef BOARD_HERMOSA
+       { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+         snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.1", onu_nr_char);
+         gpon_hermosa_run_script("getXponOnuAniTcGemPortPmContent", gem_script_index);
+         blobmsg_add_u64(&b, "frames_sent",     gpon_hermosa_parse_field_int("FramesSent"));
+         blobmsg_add_u64(&b, "frames_received", gpon_hermosa_parse_field_int("FramesReceived")); }
+#else
        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(1));
        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(1));
+#endif
     } 
 
     else if(str_equal(path, PM_GEM_PORT_2, name_len)) 
     {
        SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_2", path);
+#ifdef BOARD_HERMOSA
+       { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+         snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.2", onu_nr_char);
+         gpon_hermosa_run_script("getXponOnuAniTcGemPortPmContent", gem_script_index);
+         blobmsg_add_u64(&b, "frames_sent",     gpon_hermosa_parse_field_int("FramesSent"));
+         blobmsg_add_u64(&b, "frames_received", gpon_hermosa_parse_field_int("FramesReceived")); }
+#else
        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(2));
        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(2));
+#endif
     }
 
     else if(str_equal(path, PM_GEM_PORT_3, name_len)) 
     {
        SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_3", path);
+#ifdef BOARD_HERMOSA
+       { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+         snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.3", onu_nr_char);
+         gpon_hermosa_run_script("getXponOnuAniTcGemPortPmContent", gem_script_index);
+         blobmsg_add_u64(&b, "frames_sent",     gpon_hermosa_parse_field_int("FramesSent"));
+         blobmsg_add_u64(&b, "frames_received", gpon_hermosa_parse_field_int("FramesReceived")); }
+#else
        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(3));
        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(3));
+#endif
     }
 
     else if(str_equal(path, PM_GEM_PORT_4, name_len)) 
     {
        SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_4", path);
+#ifdef BOARD_HERMOSA
+       { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+         snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.4", onu_nr_char);
+         gpon_hermosa_run_script("getXponOnuAniTcGemPortPmContent", gem_script_index);
+         blobmsg_add_u64(&b, "frames_sent",     gpon_hermosa_parse_field_int("FramesSent"));
+         blobmsg_add_u64(&b, "frames_received", gpon_hermosa_parse_field_int("FramesReceived")); }
+#else
        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(4));
        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(4));
+#endif
     }
 
     else if(str_equal(path, PM_GEM_PORT_5, name_len)) 
     {
        SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_5", path);
+#ifdef BOARD_HERMOSA
+       { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+         snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.5", onu_nr_char);
+         gpon_hermosa_run_script("getXponOnuAniTcGemPortPmContent", gem_script_index);
+         blobmsg_add_u64(&b, "frames_sent",     gpon_hermosa_parse_field_int("FramesSent"));
+         blobmsg_add_u64(&b, "frames_received", gpon_hermosa_parse_field_int("FramesReceived")); }
+#else
        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(5));
        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(5));
+#endif
     }
 
     else if(str_equal(path, PM_GEM_PORT_6, name_len)) 
     {
        SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_6", path);
+#ifdef BOARD_HERMOSA
+       { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+         snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.6", onu_nr_char);
+         gpon_hermosa_run_script("getXponOnuAniTcGemPortPmContent", gem_script_index);
+         blobmsg_add_u64(&b, "frames_sent",     gpon_hermosa_parse_field_int("FramesSent"));
+         blobmsg_add_u64(&b, "frames_received", gpon_hermosa_parse_field_int("FramesReceived")); }
+#else
        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(6));
        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(6));
+#endif
     }
 
     else if(str_equal(path, PM_GEM_PORT_7, name_len)) 
     {
        SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_7", path);
+#ifdef BOARD_HERMOSA
+       { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+         snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.7", onu_nr_char);
+         gpon_hermosa_run_script("getXponOnuAniTcGemPortPmContent", gem_script_index);
+         blobmsg_add_u64(&b, "frames_sent",     gpon_hermosa_parse_field_int("FramesSent"));
+         blobmsg_add_u64(&b, "frames_received", gpon_hermosa_parse_field_int("FramesReceived")); }
+#else
        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(7));
        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(7));
+#endif
     }
 
     else if(str_equal(path, PM_GEM_PORT_8, name_len)) 
     {
        SAH_TRACE_INFO("path='%s' => PM_GEM_PORT_8", path);
+#ifdef BOARD_HERMOSA
+       { char gem_script_index[16]; char onu_nr_char = name[strlen("xpon_onu.")];
+         snprintf(gem_script_index, sizeof(gem_script_index), "%c.1.8", onu_nr_char);
+         gpon_hermosa_run_script("getXponOnuAniTcGemPortPmContent", gem_script_index);
+         blobmsg_add_u64(&b, "frames_sent",     gpon_hermosa_parse_field_int("FramesSent"));
+         blobmsg_add_u64(&b, "frames_received", gpon_hermosa_parse_field_int("FramesReceived")); }
+#else
        blobmsg_add_u64(&b, "frames_sent", gpon_get_gem_transmittedframes(8));
        blobmsg_add_u64(&b, "frames_received", gpon_get_gem_receivedframes(8));
+#endif
     }
 
     else if(str_equal(path, PERF_THRESHOLDS, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => PERF_THRESHOLDS", path);
-        blobmsg_add_u32(&b, "signal_fail", gpon_get_tc_perf_signal_fail());  
-        blobmsg_add_u32(&b, "signal_degrade", gpon_get_tc_perf_signal_degrade());  
+#ifdef BOARD_HERMOSA
+        {
+            char ani_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniTcPerformanceThresholdsContent", ani_script_index);
+            blobmsg_add_u32(&b, "signal_fail",    (uint32_t)gpon_hermosa_parse_field_int("SignalFail"));
+            blobmsg_add_u32(&b, "signal_degrade", (uint32_t)gpon_hermosa_parse_field_int("SignalDegrade"));
+        }
+#else
+        /* Marina / Alder / Miami*/
+        blobmsg_add_u32(&b, "signal_fail", gpon_get_tc_perf_signal_fail());
+        blobmsg_add_u32(&b, "signal_degrade", gpon_get_tc_perf_signal_degrade());
+#endif
     } 
     
     else if(str_equal(path, ALARMS, name_len))
     {
         SAH_TRACE_INFO("path='%s' => ALARMS", path);
-        blobmsg_add_u8(&b, "los", gpon_get_pm_alarm_los());  
-        blobmsg_add_u8(&b, "lof", gpon_get_pm_alarm_lof());  
-        blobmsg_add_u8(&b, "sf", gpon_get_pm_alarm_sf());  
-        blobmsg_add_u8(&b, "sd", gpon_get_pm_alarm_sd());  
-        blobmsg_add_u8(&b, "lcdg", gpon_get_pm_alarm_lcdg());  
-        blobmsg_add_u8(&b, "tf", gpon_get_pm_alarm_tf());  
-        blobmsg_add_u8(&b, "suf", gpon_get_pm_alarm_suf());  
-        blobmsg_add_u8(&b, "mem", gpon_get_pm_alarm_mem());  
-        blobmsg_add_u8(&b, "dact", gpon_get_pm_alarm_dact());  
-        blobmsg_add_u8(&b, "dis", gpon_get_pm_alarm_dis());  
-        blobmsg_add_u8(&b, "mis", 0);  
-        blobmsg_add_u8(&b, "pee", 0);  
-        blobmsg_add_u8(&b, "rdi", 0);  
-        blobmsg_add_u8(&b, "lods", gpon_get_pm_alarm_lods());  
-        blobmsg_add_u8(&b, "rogue", gpon_get_pm_alarm_rogue());  
+#ifdef BOARD_HERMOSA
+        {
+            char ani_script_index[8];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(ani_script_index, sizeof(ani_script_index), "%c.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniTcAlarmContent", ani_script_index);
+            blobmsg_add_u8(&b, "los",   (uint8_t)gpon_hermosa_parse_field_int("LOS"));
+            blobmsg_add_u8(&b, "lof",   (uint8_t)gpon_hermosa_parse_field_int("LOF"));
+            blobmsg_add_u8(&b, "sf",    (uint8_t)gpon_hermosa_parse_field_int("SF"));
+            blobmsg_add_u8(&b, "sd",    (uint8_t)gpon_hermosa_parse_field_int("SD"));
+            blobmsg_add_u8(&b, "lcdg",  (uint8_t)gpon_hermosa_parse_field_int("LCDG"));
+            blobmsg_add_u8(&b, "tf",    (uint8_t)gpon_hermosa_parse_field_int("TF"));
+            blobmsg_add_u8(&b, "suf",   (uint8_t)gpon_hermosa_parse_field_int("SUF"));
+            blobmsg_add_u8(&b, "mem",   (uint8_t)gpon_hermosa_parse_field_int("MEM"));
+            blobmsg_add_u8(&b, "dact",  (uint8_t)gpon_hermosa_parse_field_int("DACT"));
+            blobmsg_add_u8(&b, "dis",   (uint8_t)gpon_hermosa_parse_field_int("DIS"));
+            blobmsg_add_u8(&b, "mis",   (uint8_t)gpon_hermosa_parse_field_int("MIS"));
+            blobmsg_add_u8(&b, "pee",   (uint8_t)gpon_hermosa_parse_field_int("PEE"));
+            blobmsg_add_u8(&b, "rdi",   (uint8_t)gpon_hermosa_parse_field_int("RDI"));
+            blobmsg_add_u8(&b, "lods",  (uint8_t)gpon_hermosa_parse_field_int("LODS"));
+            blobmsg_add_u8(&b, "rogue", (uint8_t)gpon_hermosa_parse_field_int("ROGUE"));
+        }
+#else
+        /* Marina / Alder / Miami*/
+        blobmsg_add_u8(&b, "los", gpon_get_pm_alarm_los());
+        blobmsg_add_u8(&b, "lof", gpon_get_pm_alarm_lof());
+        blobmsg_add_u8(&b, "sf", gpon_get_pm_alarm_sf());
+        blobmsg_add_u8(&b, "sd", gpon_get_pm_alarm_sd());
+        blobmsg_add_u8(&b, "lcdg", gpon_get_pm_alarm_lcdg());
+        blobmsg_add_u8(&b, "tf", gpon_get_pm_alarm_tf());
+        blobmsg_add_u8(&b, "suf", gpon_get_pm_alarm_suf());
+        blobmsg_add_u8(&b, "mem", gpon_get_pm_alarm_mem());
+        blobmsg_add_u8(&b, "dact", gpon_get_pm_alarm_dact());
+        blobmsg_add_u8(&b, "dis", gpon_get_pm_alarm_dis());
+        blobmsg_add_u8(&b, "mis", 0);
+        blobmsg_add_u8(&b, "pee", 0);
+        blobmsg_add_u8(&b, "rdi", 0);
+        blobmsg_add_u8(&b, "lods", gpon_get_pm_alarm_lods());
+        blobmsg_add_u8(&b, "rogue", gpon_get_pm_alarm_rogue());
+#endif
     } 
     
     else if(str_equal(path, TRANSCEIVER_1, name_len)) 
     {
         SAH_TRACE_INFO("path='%s' => TRANSCEIVER_1", path);
-
-        char vendor_rev[64];
-        snprintf(vendor_rev, 64, "Version_%d", s_transceiver_1_vendor_rev);
-
-        blobmsg_add_u32(&b, "id", 0);
-        blobmsg_add_u32(&b, "identifier", 2);
-        blobmsg_add_string(&b, "vendor_name", gpon_get_PM_vendorname());  
-        blobmsg_add_string(&b, "vendor_part_number", gpon_get_PM_vendorpartnumber());  
-        blobmsg_add_string(&b, "vendor_revision", gpon_get_pm_modulefirmwareversion());  
-        blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
-        blobmsg_add_string(&b, "connector", gpon_get_PM_connector()); 
-        blobmsg_add_u64(&b, "nominal_bit_rate_downstream", gpon_get_nominalbitrate());
-        blobmsg_add_u64(&b, "nominal_bit_rate_upstream", gpon_get_nominalbitrate());
-        s_rx_power=gpon_get_rxp_signallevel();
-        blobmsg_add_u32(&b, "rx_power", s_rx_power);
-        s_tx_power=gpon_get_txp_signallevel();
-        blobmsg_add_u32(&b, "tx_power", s_tx_power);  
-        s_voltage=gpon_get_voltage();
-        blobmsg_add_u32(&b, "voltage", s_voltage); 
-        s_bias=gpon_get_bias();
-        blobmsg_add_u32(&b, "bias", s_bias);
-        s_temperature=gpon_get_temperature();
-        blobmsg_add_u32(&b, "temperature", s_temperature);
+#ifdef BOARD_HERMOSA
+        {
+            /* Hermosa: INDEX format "<onu_nr>.1.1", e.g. "1.1.1" */
+            char xcvr_script_index[16];
+            char onu_nr_char = name[strlen("xpon_onu.")];
+            snprintf(xcvr_script_index, sizeof(xcvr_script_index), "%c.1.1", onu_nr_char);
+            gpon_hermosa_run_script("getXponOnuAniTransceiverContent", xcvr_script_index);
+            blobmsg_add_u32(&b, "id", 0);
+            blobmsg_add_u32(&b, "identifier", (uint32_t)gpon_hermosa_parse_field_int("Identifier"));
+            blobmsg_add_string(&b, "vendor_name", gpon_hermosa_parse_field("ModuleVendor"));
+            blobmsg_add_string(&b, "vendor_part_number", "");
+            blobmsg_add_string(&b, "vendor_revision", "");
+            blobmsg_add_string(&b, "pon_mode", gpon_hermosa_parse_field("PONMode"));
+            blobmsg_add_string(&b, "connector", gpon_hermosa_parse_field("Connector"));
+            blobmsg_add_u64(&b, "nominal_bit_rate_downstream", gpon_hermosa_parse_field_int("NominalBitRateDownstream"));
+            blobmsg_add_u64(&b, "nominal_bit_rate_upstream",   gpon_hermosa_parse_field_int("NominalBitRateUpstream"));
+            blobmsg_add_u32(&b, "rx_power",     (uint32_t)gpon_hermosa_parse_field_int("RxPower"));
+            blobmsg_add_u32(&b, "tx_power",     (uint32_t)gpon_hermosa_parse_field_int("TxPower"));
+            blobmsg_add_u32(&b, "voltage",      (uint32_t)gpon_hermosa_parse_field_int("Voltage"));
+            blobmsg_add_u32(&b, "bias",         (uint32_t)gpon_hermosa_parse_field_int("Bias"));
+            blobmsg_add_u32(&b, "temperature",  (uint32_t)gpon_hermosa_parse_field_int("Temperature"));
+        }
+#else
+        /* Marina / Alder / Miami*/
+        {
+            char vendor_rev[64];
+            snprintf(vendor_rev, 64, "Version_%d", s_transceiver_1_vendor_rev);
+            blobmsg_add_u32(&b, "id", 0);
+            blobmsg_add_u32(&b, "identifier", 2);
+            blobmsg_add_string(&b, "vendor_name", gpon_get_PM_vendorname());
+            blobmsg_add_string(&b, "vendor_part_number", gpon_get_PM_vendorpartnumber());
+            blobmsg_add_string(&b, "vendor_revision", gpon_get_pm_modulefirmwareversion());
+            blobmsg_add_string(&b, "pon_mode", gpon_get_PM_ponmode());
+            blobmsg_add_string(&b, "connector", gpon_get_PM_connector());
+            blobmsg_add_u64(&b, "nominal_bit_rate_downstream", gpon_get_nominalbitrate());
+            blobmsg_add_u64(&b, "nominal_bit_rate_upstream", gpon_get_nominalbitrate());
+            s_rx_power=gpon_get_rxp_signallevel();
+            blobmsg_add_u32(&b, "rx_power", s_rx_power);
+            s_tx_power=gpon_get_txp_signallevel();
+            blobmsg_add_u32(&b, "tx_power", s_tx_power);
+            s_voltage=gpon_get_voltage();
+            blobmsg_add_u32(&b, "voltage", s_voltage);
+            s_bias=gpon_get_bias();
+            blobmsg_add_u32(&b, "bias", s_bias);
+            s_temperature=gpon_get_temperature();
+            blobmsg_add_u32(&b, "temperature", s_temperature);
+        }
+#endif
     } 
     
     else if(str_equal(path, TRANSCEIVER_2, name_len)) 

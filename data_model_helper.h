@@ -134,4 +134,14 @@ uint64_t gpon_get_broadcast_packets_sent_by_index(int index);
 uint64_t gpon_get_broadcast_packets_received_by_index(int index);
 char* gpon_get_eth_uni_ani_list_by_index(int index);
 
+/* ===========================================================================
+ * Hermosa (ipq52xx) board support.
+ * ===========================================================================
+ */
+#ifdef BOARD_HERMOSA
+int         gpon_hermosa_run_script(const char* func, const char* index);
+const char* gpon_hermosa_parse_field(const char* field);
+uint64_t    gpon_hermosa_parse_field_int(const char* field);
+#endif /* BOARD_HERMOSA */
+
 #endif

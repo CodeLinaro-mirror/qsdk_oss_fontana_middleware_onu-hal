@@ -1147,9 +1147,17 @@ int gpon_get_software_number_of_entries()
 
 int gpon_get_eth_uni_number_of_entries()
 {
-    int result;
-    result=execute_int("omci -c 'info conv_uni' | grep IF_NAME -A10 | grep -c LAN");
-    return result;
+#ifdef BOARD_HERMOSA
+    /* Hermosa: use tr181_xpon.sh script.
+     * Run getXponOnuContent for ONU 1 and parse EthernetUNINumberOfEntries.
+     * This is called at startup by dm_init_ethernet_uni_objects() to
+     * determine how many xpon_onu.1.ethernet_uni.N ubus objects to register. */
+    gpon_hermosa_run_script("getXponOnuContent", "1");
+    return (int) gpon_hermosa_parse_field_int("EthernetUNINumberOfEntries");
+#else
+    /* Marina / Alder / Miami: original implementation unchanged */
+    return execute_int("omci -c 'info conv_uni' | grep IF_NAME -A10 | grep -c LAN");
+#endif
 }
 
 int gpon_get_port_number_of_entries()
@@ -1771,3 +1779,76 @@ char* gpon_get_PM_connector()
     }
 }
 
+/* ===========================================================================
+ * Hermosa (ipq52xx / RDP500) board support.
+ * Compiled only when -DBOARD_HERMOSA is defined (set in Makefile).
+ * ===========================================================================
+ */
+#ifdef BOARD_HERMOSA
+
+static char s_hermosa_buf[4096] = {'\0'};
+
+int gpon_hermosa_run_script(const char* func, const char* index)
+{
+    char cmd[512];
+    FILE* fp;
+    size_t n;
+
+    snprintf(cmd, sizeof(cmd),
+             "FUNC=%s INDEX=%s /etc/omci/script/tr181/tr181_xpon.sh",
+             func, index);
+    fp = popen(cmd, "r");
+    if(!fp)
+    {
+        s_hermosa_buf[0] = '\0';
+        return -1;
+    }
+    n = fread(s_hermosa_buf, 1, sizeof(s_hermosa_buf) - 1, fp);
+    s_hermosa_buf[n] = '\0';
+    pclose(fp);
+    return 0;
+}
+
+const char* gpon_hermosa_parse_field(const char* field)
+{
+    char search[128];
+    char* pos;
+    char* end;
+    size_t len;
+
+    snprintf(search, sizeof(search), "%s=", field);
+    if(strncmp(s_hermosa_buf, search, strlen(search)) == 0)
+    {
+        pos = s_hermosa_buf + strlen(search);
+    }
+    else
+    {
+        snprintf(search, sizeof(search), "\n%s=", field);
+        pos = strstr(s_hermosa_buf, search);
+        if(!pos)
+        {
+            memset(retValue, 0, 256);
+            return retValue;
+        }
+        pos += strlen(search);
+    }
+
+    end = strchr(pos, '\n');
+    len = end ? (size_t)(end - pos) : strlen(pos);
+
+    memset(retValue, 0, 256);
+    if(len > 0 && len < 256)
+        strlcpy(retValue, pos, len + 1);
+    return retValue;
+}
+
+uint64_t gpon_hermosa_parse_field_int(const char* field)
+{
+    const char* val = gpon_hermosa_parse_field(field);
+    uint64_t result = 0;
+    if(val && strlen(val) > 0)
+        sscanf(val, "%" SCNu64, &result);
+    return result;
+}
+
+#endif /* BOARD_HERMOSA */
