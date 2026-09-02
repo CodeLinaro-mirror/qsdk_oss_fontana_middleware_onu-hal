@@ -14,7 +14,7 @@ OBJECTS := $(addprefix $(OBJDIR)/,$(notdir $(SOURCES:.c=.o)))
 #          -Wno-format-nonliteral -Werror=discarded-qualifiers \
 #          -g3 -I$(INCDIR_PRIV)
 
-CFLAGS += -g3 -I$(INCDIR_PRIV) -DBOARD_HERMOSA
+CFLAGS += -g3 -I$(INCDIR_PRIV)
 
 #LDFLAGS += $(STAGING_LIBDIR) -lubox -lubus
 
