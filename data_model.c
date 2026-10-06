@@ -54,6 +54,7 @@ static const char TRANSCEIVER_2[] = "xpon_onu.x.ani.1.transceiver.2";
 
 static const char XPON_ONU_ONE[] = "xpon_onu.1";
 static const char XPON_ONU_TWO[] = "xpon_onu.2";
+static const char XPON_ERP_MODE[] = "xpon_erp_mode.x";
 
 static const char METHOD_GET[] = "get";
 static const char METHOD_ENABLE[] = "enable";
@@ -67,6 +68,7 @@ static uint32_t s_onu_state = 2;
 
 typedef enum _obj_id {
     id_xpon_onu       = 0,
+    id_xpon_erp_mode,
     id_sw_img_1,
     id_sw_img_2,
     id_ani_1,
@@ -156,6 +158,12 @@ static const object_info_t OBJECT_INFO[n_static_objects] = {
     {
         .id = id_xpon_onu,
         .name = XPON_ONU,
+        .methods = METHODS_GET_ENABLE_AND_DISABLE,
+        .n_methods = ARRAY_SIZE(METHODS_GET_ENABLE_AND_DISABLE)
+    },
+    {
+        .id = id_xpon_erp_mode,
+        .name = XPON_ERP_MODE,
         .methods = METHODS_GET_ENABLE_AND_DISABLE,
         .n_methods = ARRAY_SIZE(METHODS_GET_ENABLE_AND_DISABLE)
     },
@@ -349,6 +357,8 @@ static struct ubus_context* s_ctx = NULL;
 static int s_onu_nr = 1;
 
 static bool s_onu_enabled = true;
+/* ERPMode.Enable=1 means ERP sleep mode is active. */
+static bool s_erp_mode_enabled = false;
 static bool s_ani_one_enabled = true;
 
 
@@ -382,8 +392,13 @@ static void data_model_for_get_method(const char* name) {
     const size_t name_len = strlen(name);
     char path[128];
     snprintf(path, 128, "%s", name);
+    const char* erp_mode_prefix = "xpon_erp_mode.";
+    const size_t erp_mode_prefix_len = strlen(erp_mode_prefix);
     const int index_of_onu_nr = strlen("xpon_onu.");
-    path[index_of_onu_nr] = 'x';
+    if(strncmp(name, erp_mode_prefix, erp_mode_prefix_len) == 0)
+        path[erp_mode_prefix_len] = 'x';
+    else
+        path[index_of_onu_nr] = 'x';
     /**
      * 'path' has same length as 'name'. So code below can use 'name_len'
      * for both.
@@ -429,8 +444,13 @@ static void data_model_for_get_method(const char* name) {
         }
 #endif
     }
-    
-    else if(str_equal(path, SW_IMG_1, name_len)) 
+
+    else if(str_equal(path, XPON_ERP_MODE, name_len))
+    {
+        blobmsg_add_u8(&b, "enable", s_erp_mode_enabled ? 1 : 0);
+    }
+
+    else if(str_equal(path, SW_IMG_1, name_len))
     {
         SAH_TRACE_INFO("path='%s' => SW_IMG_1", path);
         blobmsg_add_u32(&b, "id", 0);
@@ -1127,8 +1147,13 @@ static void set_enable(const char* const obj_name, bool enable) {
     printf("--------------- inside set_enable function -----------------\n");
     char path[128];
     snprintf(path, 128, "%s", obj_name);
+    const char* erp_mode_prefix = "xpon_erp_mode.";
+    const size_t erp_mode_prefix_len = strlen(erp_mode_prefix);
     const int index_of_onu_nr = strlen("xpon_onu.");
-    path[index_of_onu_nr] = 'x';
+    if(strncmp(obj_name, erp_mode_prefix, erp_mode_prefix_len) == 0)
+        path[erp_mode_prefix_len] = 'x';
+    else
+        path[index_of_onu_nr] = 'x';
     const size_t path_len = strlen(obj_name);
 
     if(str_equal(path, XPON_ONU, path_len))
@@ -1141,9 +1166,20 @@ static void set_enable(const char* const obj_name, bool enable) {
             gpon_set_xpon_onu_enable(enable);
         }
         blobmsg_add_u8(&b, "enable", s_onu_enabled);
-    } 
+    }
 
-    else if(str_equal(path, ANI_1, path_len)) 
+    else if(str_equal(path, XPON_ERP_MODE, path_len))
+    {
+        if(s_erp_mode_enabled != enable)
+        {
+            SAH_TRACE_INFO("s_erp_mode_enabled: %d -> %d", s_erp_mode_enabled, enable);
+            s_erp_mode_enabled = enable;
+            gpon_set_xpon_erp_mode_enable(enable);
+        }
+        blobmsg_add_u8(&b, "enable", s_erp_mode_enabled);
+    }
+
+    else if(str_equal(path, ANI_1, path_len))
     {
         if(s_ani_one_enabled != enable) 
         {
@@ -1323,11 +1359,16 @@ static int register_object(obj_id_t id) {
     }
 
     char path[128];
-    const int index = strlen("xpon_onu."); /* index of 'x' char */
+    const char* erp_mode_prefix = "xpon_erp_mode.";
+    const size_t erp_mode_prefix_len = strlen(erp_mode_prefix);
+    const int index_of_onu_nr = strlen("xpon_onu.");
 
     snprintf(path, 128, "%s", OBJECT_INFO[id].name);
     /* Replace 'x' char with ONU nr: '1' or '2'. */
-    path[index] = DIGITS[s_onu_nr];
+    if(strncmp(path, erp_mode_prefix, erp_mode_prefix_len) == 0)
+        path[erp_mode_prefix_len] = DIGITS[s_onu_nr];
+    else
+        path[index_of_onu_nr] = DIGITS[s_onu_nr];
 
     object_wrapper_t* obj = create_object_wrapper(id, path);
     when_null_trace(obj, exit, ERROR,

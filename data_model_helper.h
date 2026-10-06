@@ -100,6 +100,7 @@ char* gpon_get_eth_uni_name();
 char* gpon_get_eth_uni_interdomain_id();
 uint64_t gpon_get_onu_ani_last_change();
 void gpon_set_xpon_onu_enable(int val);
+void gpon_set_xpon_erp_mode_enable(int val);
 int gpon_get_xpon_eth_uni_enable();
 void gpon_set_xpon_onu_ani_enable(int val);
 uint64_t gpon_get_ploam_txmesgcount();

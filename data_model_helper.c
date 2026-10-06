@@ -1332,6 +1332,15 @@ void gpon_set_xpon_onu_enable(int val)
     pclose(fp);
 }
 
+void gpon_set_xpon_erp_mode_enable(int val)
+{
+    const char* cmd = val ?
+        "/etc/omci/pon_subsystem.sh erp_sleep" :
+        "/etc/omci/pon_subsystem.sh erp_awake";
+
+    system(cmd);
+}
+
 void gpon_set_xpon_onu_ani_enable(int val)
 {
     char* cmd;
